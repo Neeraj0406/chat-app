@@ -1,10 +1,11 @@
 import express from "express";
 import { isAuthenticatedUser } from "../middlewares/auth.js";
-import { newGroupChat } from "../controller/chatController.js";
+import { newGroupChat, getMyChat } from "../controller/chatController.js";
 const router = express.Router()
 
 router.use(isAuthenticatedUser)
-router.post("/new", newGroupChat)
+router.post("/new-group", newGroupChat)
+router.get("/my-chats", getMyChat)
 
 
 

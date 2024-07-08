@@ -1,6 +1,6 @@
 import { User } from "../models/userModel.js";
 import { showError, showResponse, showServerError } from "../utils/apiResponse.js";
-import constant from "../utils/contant.js";
+import constant from "../constants/contant.js";
 import { bcryptPassword, sendToken, verifyPassword } from "../utils/helper.js";
 
 
@@ -31,8 +31,7 @@ const newUser = async (req, res) => {
             bio,
             avatar: dummyavatar
         })
-        const token = sendToken({ _id: user._id })
-        return res.status(201).cookie(constant.cookieName, token, cookieOptions).json({
+        return res.status(201).json({
             data: user,
             message: "new user created successfully"
         })
@@ -105,7 +104,7 @@ const searchUser = async (req, res) => {
     try {
         const { name } = req.query
 
-        
+
 
 
 

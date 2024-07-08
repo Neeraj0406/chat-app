@@ -1,5 +1,5 @@
 import { showError, showServerError } from "../utils/apiResponse.js";
-import constant from "../utils/contant.js";
+import constant from "../constants/contant.js";
 import { verifyToken } from "../utils/helper.js";
 
 const isAuthenticatedUser = async (req, res, next) => {

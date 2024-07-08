@@ -51,3 +51,7 @@ export const verifyToken = (token) => {
     return decodeToken;
 };
 
+export const emitEvent = (req, event, users, data) => {
+    console.log("emitting event", req, event, users, data);
+
+}
