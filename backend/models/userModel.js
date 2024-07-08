@@ -1,4 +1,4 @@
-import { Schema, model, models } from "mongoose"
+import mongoose, { Schema, model } from "mongoose"
 
 const userSchema = new Schema({
     name: {
@@ -15,6 +15,7 @@ const userSchema = new Schema({
         required: [true, "Please enter password"],
         select: false
     },
+    bio: String,
     avatar: {
         public_id: {
             type: String,
@@ -30,4 +31,4 @@ const userSchema = new Schema({
 })
 
 
-export const User = models.User || model("User", userSchema)
+export const User = mongoose.models.User || model("User", userSchema)
