@@ -31,21 +31,22 @@ const newGroupChat = async (req, res) => {
 }
 
 
-const getMyChat = async (req, res) => {
-    try {
-        const chats = await Chat.find({ members: req.id }).populate(
-            {
-                path: "members",
-                select: "name username avatar "
-            }
+// const getMyChat = async (req, res) => {
+//     try {
+//         const chats = await Chat.find({ members: req.id }).populate(
+//             {
+//                 path: "members",
+//                 select: "name username avatar "
+//             }
 
-        )
-        return showResponse(res, chats, "All chats has fetched")
+//         )
+//         return showResponse(res, chats, "All chats has fetched")
 
 
-    } catch (error) {
-        showServerError(res)
-    }
-}
+//     } catch (error) {
+//         showServerError(res)
+
+//     }
+// }
 
 export { newGroupChat, getMyChat }
