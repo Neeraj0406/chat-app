@@ -215,5 +215,31 @@ const leaveGroup = async (req, res) => {
     }
 }
 
+const sendAttachments = async (req, res) => {
+    try {
+        const { chatId } = req.body
 
-export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup }
+        const [chat, user] = await Promise.all([
+            Chat.findById(chatId),
+            User.findById(req.id)
+        ])
+
+        if (!chat) {
+            return showError(res, "Chat not found")
+        }
+
+        const messageForRealTime = {
+            content : ""
+        }
+
+
+        const files = req.files ?? [] 
+
+
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+
+export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments }
