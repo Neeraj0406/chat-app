@@ -1,8 +1,9 @@
 export const showResponse = async (res, data, message, statusCode = 200) => {
-    if (data) {
+    if (message) {
         return res.status(statusCode).json({ data, message })
-    } else {
-        return res.status(statusCode).json({ message })
+    }
+    else {
+        return res.status(statusCode).json({ data })
     }
 }
 

@@ -18,7 +18,11 @@ const chatSchema = new Schema({
             type: Schema.Types.ObjectId,
             ref: "User"
         }
-    ]
+    ],
+    avatar: {
+        public_id: String,
+        url: String
+    }
 
 }, {
     timestamps: true

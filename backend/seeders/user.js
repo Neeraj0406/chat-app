@@ -1,5 +1,6 @@
 import { User } from "../models/userModel.js"
 import { faker } from "@faker-js/faker"
+import { bcryptPassword } from "../utils/helper.js";
 
 const createUser = async (numOfUser) => {
 
@@ -10,7 +11,7 @@ const createUser = async (numOfUser) => {
                 name: faker.person.firstName(),
                 username: faker.internet.userName(),
                 bio: faker.lorem.sentence(),
-                password: "Admin@123", // Example password, consider hashing in a real application
+                password: bcryptPassword("Admin@123"),
                 avatar: {
                     url: faker.image.avatar(),
                     public_id: faker.system.fileName()

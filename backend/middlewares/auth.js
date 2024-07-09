@@ -11,7 +11,6 @@ const isAuthenticatedUser = async (req, res, next) => {
         }
 
         const decodedToken = verifyToken(token);
-        console.log("decodedToken", decodedToken);
 
         if (!decodedToken._id) {
             return showError(res, "Invalid token", 401);
