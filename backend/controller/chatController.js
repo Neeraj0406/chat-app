@@ -1,8 +1,9 @@
 import { EmitEvents } from "../constants/events.js"
 import { Chat } from "../models/chat.js"
+import { Message } from "../models/message.js"
 import { User } from "../models/userModel.js"
 import { showError, showResponse, showServerError } from "../utils/apiResponse.js"
-import { emitEvent } from "../utils/helper.js"
+import { deleteFilesFromCloudinary, emitEvent } from "../utils/helper.js"
 
 const newGroupChat = async (req, res) => {
     try {
@@ -61,7 +62,6 @@ const getMyGroups = async (req, res) => {
             path: "members",
             select: "name username"
         })
-        console.log("myGroups", myGroups)
 
         return showResponse(res, myGroups, "No group found")
     } catch (error) {
@@ -125,6 +125,7 @@ const addMembers = async (req, res) => {
         showServerError(res)
     }
 }
+
 
 const removeMembers = async (req, res) => {
     try {
@@ -215,25 +216,86 @@ const leaveGroup = async (req, res) => {
     }
 }
 
+
 const sendAttachments = async (req, res) => {
     try {
         const { chatId } = req.body
 
         const [chat, user] = await Promise.all([
             Chat.findById(chatId),
-            User.findById(req.id)
+            User.findById(req.id, "name avatar")
         ])
 
         if (!chat) {
             return showError(res, "Chat not found")
         }
 
-        const messageForRealTime = {
-            content : ""
+        const files = req.files ?? []
+        if (files.length > 1) {
+            return showError(res, "Please provide attachments")
         }
 
+        const attachments = []
 
-        const files = req.files ?? [] 
+        const messageForRealTime = {
+            content: "",
+            attachments,
+            sender: {
+                _id: req.id,
+                name: user.name,
+                avatar: avatar
+            },
+            chat: chatId
+        }
+
+        const messageForDB = {
+            content: "",
+            attachments,
+            sender: req.id,
+            chat: chatId
+        }
+
+        const message = await Message.create(messageForDB)
+
+        emitEvent(req, EmitEvents.NEW_ATTACHMENT, chat.members, {
+            message: messageForRealTime,
+            chatId
+        })
+
+        emitEvent(req, EmitEvents.NEW_MESSAGE_ALERT, chat.members, { chatId })
+
+        return showResponse(res, message)
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+
+const getChatDetails = async (req, res) => {
+    try {
+        const { chatId } = req.params
+
+        if (req.query.populate == "true") {
+            let chat = await Chat.findById(chatId).populate({
+                path: "members",
+                select: "name avatar"
+            })
+
+            if (!chat) {
+                return showError(res, "No chat found")
+            }
+            chat.members = chat.members.map((member) => ({ ...member, avatar: member.avatar.url }))
+
+            return showResponse(res, chat)
+        } else {
+            let chat = await Chat.findById(chatId)
+
+            if (!chat) {
+                return showError(res, "No chat found")
+            }
+
+            return showResponse(res, chat)
+        }
 
 
     } catch (error) {
@@ -242,4 +304,102 @@ const sendAttachments = async (req, res) => {
 }
 
 
-export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments }
+const renameGroup = async (req, res) => {
+    try {
+        const { name } = req.body
+        const { chatId } = req.params
+
+
+
+        let chat = await Chat.findById(chatId)
+        if (!chat) {
+            return showError(res, "Chat not found")
+        }
+
+        if (!chat.groupChat) {
+            return showError(res, "Cannot change name")
+        }
+        if (chat.creator?.toString() != req.id?.toString()) {
+            return showError(res, "Only admin can change the name of group")
+        }
+
+        chat.name = name
+        await chat.save()
+        return showResponse(res, chat, "Group name updated successfully")
+
+
+    } catch (error) {
+        // console.log(error)
+        return showServerError(res)
+    }
+}
+
+
+const deleteChatDetails = async (req, res) => {
+    try {
+        const { chatId } = req.params
+
+        let chat = await Chat.findById(chatId)
+        if (!chat) {
+            return showError(res, "Chat not found")
+        }
+
+        if (!chat.groupChat) {
+            return showError(res, "Cannot change name")
+        }
+        if (chat.creator?.toString() != req.id?.toString()) {
+            return showError(res, "Only admin can change the name of group")
+        }
+
+        const messageWithAttachments = await Message.find({
+            chat: chatId,
+            attachments: { $exists: true, $ne: [] }
+        })
+        let publicIds = []
+
+
+        messageWithAttachments?.forEach(({ attachments }) =>
+            attachments?.forEach(({ public_id }) =>
+                publicIds.push(public_id)))
+
+
+        await Promise.all([
+            deleteFilesFromCloudinary(publicIds),
+            chat.deleteOne(),
+            Message.deleteMany({ chat: chatId })
+        ])
+
+        emitEvent(req, EmitEvents.REFETCH_CHATS, chat.members)
+
+        return showResponse(res, {}, "Chat deleted successfully")
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+
+const getChatMessage = async (req, res) => {
+    try {
+        const chatId = req.params
+        const { page = 1, limit = 20 } = req.query
+
+        const [message, messageCount] = await Promise.all([
+            Message.find({ chat: chatId })
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .populate("sender", "name avatar")
+                .lean(),
+            Message.countDocuments({ chat: chatId })
+        ])
+
+        return showResponse(res, { data: message, totalCount: messageCount })
+
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+
+
+export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage }
