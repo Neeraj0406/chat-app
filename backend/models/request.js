@@ -1,4 +1,4 @@
-import mongoose, { Schema, model } from "mongoose"
+import mongoose, { Schema, model, Types } from "mongoose"
 
 const requestSchema = new Schema({
     sender: {
@@ -13,7 +13,8 @@ const requestSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["pending", "accepted", "rejected"]
+        enum: ["pending", "accepted", "rejected"],
+        default: "pending"
     },
 
 }, {

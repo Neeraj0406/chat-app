@@ -1,7 +1,10 @@
 import { User } from "../models/userModel.js";
 import { showError, showResponse, showServerError } from "../utils/apiResponse.js";
 import constant from "../constants/contant.js";
-import { bcryptPassword, sendToken, verifyPassword } from "../utils/helper.js";
+import { bcryptPassword, emitEvent, sendToken, verifyPassword } from "../utils/helper.js";
+import { Chat } from "../models/chat.js";
+import { Request } from "../models/request.js";
+import { EmitEvents } from "../constants/events.js";
 
 
 let cookieOptions = {
@@ -42,7 +45,6 @@ const newUser = async (req, res) => {
 
     }
 }
-
 
 
 const login = async (req, res) => {
@@ -104,6 +106,69 @@ const searchUser = async (req, res) => {
     try {
         const { name } = req.query
 
+        const myChats = await Chat.find({
+            groupChat: false,
+            members: { $in: req.id }
+        })
+
+        const allUserFromMyChats = myChats?.flatMap((chat) => chat.members)
+        console.log("name", name);
+
+        const allUserExceptFriends = await User.find(
+            {
+                _id: { $nin: allUserFromMyChats },
+                name: new RegExp(name, "i")
+            },
+        ).select("name avatar")
+
+        return showResponse(res, allUserExceptFriends)
+
+
+
+    } catch (error) {
+        console.log(error);
+
+        return showServerError(res)
+    }
+}
+
+
+const sendFriendRequest = async (req, res) => {
+    try {
+        const { userId } = req.body
+
+        const userFound = await User.findById(userId)
+
+        if (!userFound) {
+            return showError(res, "User not found")
+        }
+
+        const requestPresent = await Request.findOne({
+            $or: [
+                {
+                    sender: req.id,
+                    receiver: userId
+                },
+                {
+                    sender: userId,
+                    receiver: req.id
+                }
+            ]
+        })
+
+        if (requestPresent) {
+            return showError(res, "Request has already sent")
+        }
+
+        const request = await Request.create({
+            sender: req.id,
+            receiver: userId
+        })
+
+        emitEvent(req, userId,)
+
+        return showResponse(res, EmitEvents.NEW_REQUEST, [userId])
+
 
 
 
@@ -113,5 +178,4 @@ const searchUser = async (req, res) => {
     }
 }
 
-
-export { login, newUser, getProfile, logout, searchUser }
+export { login, newUser, getProfile, logout, searchUser, sendFriendRequest }
