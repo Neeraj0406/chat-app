@@ -137,11 +137,20 @@ const sendFriendRequest = async (req, res) => {
     try {
         const { userId } = req.body
 
-        const userFound = await User.findById(userId)
+        if (userId?.toString == req.id.toString()) {
+            return showError(res, "You cannot send request to yourself")
+        }
+
+        const userFound = await User.findOne({
+            _id: userId,
+        });
 
         if (!userFound) {
             return showError(res, "User not found")
         }
+
+
+
 
         const requestPresent = await Request.findOne({
             $or: [
@@ -165,9 +174,9 @@ const sendFriendRequest = async (req, res) => {
             receiver: userId
         })
 
-        emitEvent(req, userId,)
 
-        return showResponse(res, EmitEvents.NEW_REQUEST, [userId])
+        emitEvent(res, EmitEvents.NEW_REQUEST, [userId])
+        return showResponse(res, {}, "Request sent successfully")
 
 
 
@@ -178,4 +187,86 @@ const sendFriendRequest = async (req, res) => {
     }
 }
 
-export { login, newUser, getProfile, logout, searchUser, sendFriendRequest }
+
+const acceptRequest = async (req, res) => {
+    try {
+        const { requestId, status } = req.body
+        console.log("requestId, status", requestId, status)
+
+        const request = await Request.findById(requestId).populate("sender", "name").populate("receiver", "name")
+        if (!request) {
+            return showError(res, "Request not found")
+        }
+
+        if (request.receiver._id?.toString() != req.id?.toString()) {
+            return showError(res, "You are not authorized to accept this request")
+        }
+
+
+        if (status == "false") {
+            await request.deleteOne()
+            return showResponse(res, {}, "Request rejected successfully")
+        }
+
+        else {
+            const members = [request.sender._id, request.receiver._id]
+            const [newChat, deletedRequest] = await Promise.all([
+                Chat.create({
+                    name: `${request.sender.name}-${request.receiver.name}`,
+                    members: members
+                }),
+                request.deleteOne()
+            ])
+
+            emitEvent(req, EmitEvents.REFETCH_CHATS, members)
+
+            return showResponse(res, newChat, "Request accepted successfully")
+
+        }
+
+
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+
+const showAllRequest = async (req, res) => {
+    try {
+        const request = await Request.find({
+            receiver: req.id
+        }).populate("sender", "name avatar")
+        let requestsData = request.map(({ _id, sender }) => ({
+            _id,
+            sender: {
+                sender_id: sender._id,
+                name: sender.name,
+                avatar: sender.avatar.url
+            }
+        }))
+        return showResponse(res, requestsData, "All request fetched")
+    } catch (error) {
+        return showServerError(res)
+    }
+}
+
+const getMyFriends = async (req, res) => {
+    try {
+        const allMembers = await Chat.find({
+            groupChat: false,
+            members: req.id
+        }).populate("members")
+
+        const myFriends = allMembers.flatMap(({ members }) => members)?.filter(({ _id }) => _id?.toString() != req.id?.toString())
+        const uniqueFriends = []
+        // myFriends?.map((friend) =>{
+        //     uniqueFriends?.find((ufriend))
+        // })
+        return showResponse(res, { myFriends, uniqueFriends, allMembers })
+    } catch (error) {
+        console.log(error)
+        return showServerError(res)
+    }
+}
+
+export { login, newUser, getProfile, logout, searchUser, sendFriendRequest, acceptRequest, showAllRequest, getMyFriends }
