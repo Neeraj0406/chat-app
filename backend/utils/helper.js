@@ -59,3 +59,16 @@ export const emitEvent = (req, event, users, data) => {
 export const deleteFilesFromCloudinary = (publicIds) => {
 
 }
+
+
+export const getFriendOtherThanMe = () => {
+
+}
+
+
+export const getSockets = (users = [], userSocketIds) => {
+    console.log(users)
+    console.log(userSocketIds)
+    const sockets = users.map(user => userSocketIds?.get(user))
+    return sockets
+}

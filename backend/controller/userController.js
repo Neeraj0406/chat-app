@@ -252,17 +252,17 @@ const showAllRequest = async (req, res) => {
 
 const getMyFriends = async (req, res) => {
     try {
-        const allMembers = await Chat.find({
-            groupChat: false,
-            members: req.id
-        }).populate("members")
+        // const allMembers = await Chat.find({
+        //     groupChat: false,
+        //     members: req.id
+        // }).populate("members")
 
-        const myFriends = allMembers.flatMap(({ members }) => members)?.filter(({ _id }) => _id?.toString() != req.id?.toString())
-        const uniqueFriends = []
-        // myFriends?.map((friend) =>{
-        //     uniqueFriends?.find((ufriend))
-        // })
-        return showResponse(res, { myFriends, uniqueFriends, allMembers })
+        // const myFriends = allMembers.flatMap(({ members }) => members)?.filter(({ _id }) => _id?.toString() != req.id?.toString())
+        // const uniqueFriends = []
+        // // myFriends?.map((friend) =>{
+        // //     uniqueFriends?.find((ufriend))
+        // // })
+        // return showResponse(res, { myFriends, uniqueFriends, allMembers })
     } catch (error) {
         console.log(error)
         return showServerError(res)

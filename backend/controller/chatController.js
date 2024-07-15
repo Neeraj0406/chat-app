@@ -243,7 +243,7 @@ const sendAttachments = async (req, res) => {
             sender: {
                 _id: req.id,
                 name: user.name,
-                avatar: avatar
+                avatar: avatar.url
             },
             chat: chatId
         }
@@ -254,7 +254,7 @@ const sendAttachments = async (req, res) => {
             sender: req.id,
             chat: chatId
         }
-
+        
         const message = await Message.create(messageForDB)
 
         emitEvent(req, EmitEvents.NEW_ATTACHMENT, chat.members, {
