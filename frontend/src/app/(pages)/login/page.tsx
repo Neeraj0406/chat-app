@@ -40,7 +40,7 @@ const Login: React.FC = () => {
     return (
         <PublicRoute>
             <div className="flex items-center justify-center bg-slate-400 h-screen w-screen">
-                <div className="bg-blue-400 h-[500px] w-[500px] rounded-lg px-14 py-14 text-white">
+                <div className="bg-blue-400 min-h-[500px] min-w-auto sm:min-w-[500px] mx-2 sm:mx-0 rounded-lg px-4 sm:px-14 py-14 text-white shadow-2xl">
                     <h1 className="text-4xl text-center">Login</h1>
                     <Formik
                         initialValues={{

@@ -48,7 +48,7 @@ const Register = () => {
     return (
         <PublicRoute>
             <div className="flex items-center justify-center bg-slate-400 h-screen w-screen">
-                <div className="bg-blue-400 min-h-[500px] w-[500px] rounded-lg px-14 py-14 text-white shadow-2xl">
+                <div className="bg-blue-400 min-h-[500px] min-w-auto sm:min-w-[500px] mx-2 sm:mx-0 rounded-lg px-4 sm:px-14 py-14 text-white shadow-2xl">
                     <h1 className="text-4xl text-center">Register</h1>
                     <Formik
                         initialValues={{
@@ -67,6 +67,12 @@ const Register = () => {
                             { console.log(formik.values) }
                             return (
                                 <Form>
+
+                                    <div className="inputCon">
+                                        <label>Avatar</label>
+                                        <input type="file" className="input" name="avatar" onChange={e => formik.setFieldValue("avatar", e.target.files && e.target.files?.length > 0 ? e.target.files[0] : {})} />
+                                        <ErrorMessage className='error' name='avatar' component={"div"} />
+                                    </div>
 
                                     <div className="inputCon">
                                         <label>Name</label>
@@ -89,11 +95,7 @@ const Register = () => {
                                         <Field type="text" className="input" name="bio" />
                                         <ErrorMessage className='error' name='bio' component={"div"} />
                                     </div>
-                                    <div className="inputCon">
-                                        <label>Avatar</label>
-                                        <input type="file" className="input" name="avatar" onChange={e => formik.setFieldValue("avatar", e.target.files && e.target.files?.length > 0 ? e.target.files[0] : {})} />
-                                        <ErrorMessage className='error' name='avatar' component={"div"} />
-                                    </div>
+
 
                                     <div className="text-center ">
                                         <button type="submit" className="button" disabled={formik.isSubmitting}>
