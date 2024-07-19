@@ -1,18 +1,12 @@
-import { User } from "../models/userModel.js";
-import { showError, showResponse, showServerError } from "../utils/apiResponse.js";
-import constant from "../constants/contant.js";
-import { bcryptPassword, emitEvent, sendToken, verifyPassword } from "../utils/helper.js";
+import { EmitEvents } from "../constants/events.js";
 import { Chat } from "../models/chat.js";
 import { Request } from "../models/request.js";
-import { EmitEvents } from "../constants/events.js";
+import { User } from "../models/userModel.js";
+import { showError, showResponse, showServerError } from "../utils/apiResponse.js";
+import { bcryptPassword, emitEvent, sendToken, uploadFilesToCloudinary, verifyPassword } from "../utils/helper.js";
 
 
-let cookieOptions = {
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: "none",
-    httpOnly: true,
-    secure: true
-}
+
 
 
 const newUser = async (req, res) => {
@@ -21,22 +15,34 @@ const newUser = async (req, res) => {
         const { name, username, password, bio, avatar } = req.body
         const hashedPassword = await bcryptPassword(password)
 
-        const dummyavatar = {
-            public_id: "asdfasd",
-            url: "asdfa"
+        const namePresentInDB = await User.findOne({ username })
+        if (namePresentInDB) {
+            return showError(res, "Username is already present")
         }
 
+
+        const file = req.file
+        if (!file) {
+            return showError(res, "Please upload avatar")
+        }
+
+        const result = await uploadFilesToCloudinary([file])
+
+        const userAvatar = {
+            public_id: result[0].public_id,
+            url: result[0].url
+        }
 
         const user = await User.create({
             name,
             username,
             password: hashedPassword,
             bio,
-            avatar: dummyavatar
+            avatar: userAvatar
         })
         return res.status(201).json({
             data: user,
-            message: "new user created successfully"
+            message: "Registered Successfully"
         })
     } catch (error) {
         console.log("catch error", error.message);
@@ -50,7 +56,7 @@ const newUser = async (req, res) => {
 const login = async (req, res) => {
     try {
         const { username, password } = req.body
-        let usernameFound = await User.findOne({ username }).select("+password")
+        let usernameFound = await User.findOne({ username }).select("+password").lean()
 
         if (!usernameFound) {
             return showError(res, "Invalid username or password")
@@ -60,11 +66,15 @@ const login = async (req, res) => {
         if (!passwordVerified) {
             return showError(res, "Invalid username or password")
         }
+        let token = sendToken({ _id: usernameFound?._id })
+        console.log("token", token)
         delete usernameFound.password
-        const token = sendToken({ _id: usernameFound?._id })
         usernameFound.token = token
-        return res.status(200).cookie(constant.cookieName, token, cookieOptions).json({
-            data: usernameFound
+
+        console.log("usernameFoundusernameFound", usernameFound)
+        return res.status(200).json({
+            data: usernameFound,
+            message: "User logged in successfully"
         })
 
 
@@ -88,18 +98,7 @@ const getProfile = async (req, res) => {
 }
 
 
-const logout = async (req, res) => {
-    try {
-        return res.status(200)
-            .cookie(constant.cookieName, "", { ...cookieOptions, maxAge: 0 })
-            .json({
-                message: "Logged out successfully"
-            })
-    } catch (error) {
-        showServerError(res)
-    }
 
-}
 
 
 const searchUser = async (req, res) => {
@@ -269,4 +268,4 @@ const getMyFriends = async (req, res) => {
     }
 }
 
-export { login, newUser, getProfile, logout, searchUser, sendFriendRequest, acceptRequest, showAllRequest, getMyFriends }
+export { acceptRequest, getMyFriends, getProfile, login, newUser, searchUser, sendFriendRequest, showAllRequest };

@@ -1,6 +1,10 @@
+import { PrivateRoute } from "../auth/Auth";
 
 export default function Home() {
+
   return (
-    <div>Hello</div>
+    <PrivateRoute>Hello</PrivateRoute>
   );
 }
+
+

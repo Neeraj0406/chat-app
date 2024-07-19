@@ -2,8 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+body {
+  @apply ring-gray-300;
+}
 .input {
-  @apply p-2 rounded-lg w-full mb-4 ring-gray-300 text-black;
+  @apply p-2 rounded-lg w-full mb-4  text-black  mb-0;
 }
 
 .input:focus-visible {
@@ -11,5 +14,12 @@
 }
 
 .button {
-  @apply px-5 py-2 text-black bg-white rounded-lg hover:bg-blue-700 hover:text-white hover:border-2;
+  @apply px-5 py-2 text-black bg-white rounded-lg border-2 hover:bg-blue-700 hover:text-white;
+}
+.error {
+  @apply text-red-500;
+}
+
+.inputCon {
+  @apply mb-3;
 }

@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
+import { v2 as cloudinary } from "cloudinary"
+import { v4 as uuid } from "uuid"
 
 
 export const bcryptPassword = async (password) => {
@@ -72,3 +74,40 @@ export const getSockets = (users = [], userSocketIds) => {
     const sockets = users.map(user => userSocketIds?.get(user))
     return sockets
 }
+
+export const getBase64 = (file) => {
+    return `data:${file.mimetype};base64,${file.buffer.toString("base64")}`
+}
+
+
+
+export const uploadFilesToCloudinary = async (files = []) => {
+    const uploadPromises = files.map((file) => {
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.upload(
+                getBase64(file),
+                {
+                    resource_type: "auto",
+                    public_id: uuid()
+                }, (error, result) => {
+                    if (error) {
+                        return reject(error)
+                    }
+                    resolve(result)
+                })
+        })
+    })
+
+    try {
+        const results = await Promise.all(uploadPromises)
+        const formattedResult = results.map((result) => ({
+            public_id: result.public_id,
+            url: result.url
+        }))
+
+        return formattedResult
+    } catch (error) {
+        console.log(error)
+    }
+}
+

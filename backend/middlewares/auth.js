@@ -4,7 +4,8 @@ import { verifyToken } from "../utils/helper.js";
 
 const isAuthenticatedUser = async (req, res, next) => {
     try {
-        const token = req.cookies[constant.cookieName]
+        console.log(req.headers.authorization)
+        const token = req.headers.authorization?.split(" ")[1]
 
         if (!token) {
             return showError(res, "Token not provided", 401);

@@ -11,11 +11,19 @@ import { createServer } from "http"
 import { emitEvent, getSockets } from "./utils/helper.js"
 import { v4 as uuid } from "uuid"
 import { Message } from "./models/message.js"
+import cors from "cors"
+import { v2 as cloudinary } from "cloudinary"
 
 const PORT = process.env.PORT || 8000
 
 dotenv.config()
 connectDB()
+
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_SECRET_KEY
+})
 
 const server = createServer(app)
 const io = new Server(server)
@@ -82,10 +90,19 @@ io.on("connection", (socket) => {
     })
 })
 
+const corsOptions = {
+    origin: "http://localhost:3000", // Replace with your frontend's URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
+
 
 app.use("/api/v1/user", userRoutes)
 app.use("/api/v1/chat", chatRoutes)

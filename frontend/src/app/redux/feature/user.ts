@@ -1,24 +1,60 @@
-import { createSlice } from "@reduxjs/toolkit";
+import authServices from "@/app/services/authServices";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
+import { cookies } from "next/headers";
+import { useEffect } from "react";
+
+
+export const fetchUserData = createAsyncThunk("userProfileData", async () => {
+  const res = await authServices.getProfile()
+  return res.data
+})
 
 interface userState {
-  username: string;
-  _id: string;
-  avatar: string;
+  token?: string
+  userInfo: {
+    username: string;
+    _id: string;
+    avatar: string;
+    name: string
+
+  }
 }
 
 const initialState: userState = {
-  username: "",
-  _id: "",
-  avatar: "",
+  userInfo: {
+    username: "",
+    _id: "",
+    avatar: "",
+    name: ""
+  },
+  token: localStorage.getItem("chat-token") || ""
 };
+
+
+
+
 
 export const userSlice = createSlice({
   name: "user",
   initialState,
-  reducers: {},
+  reducers: {
+    setUserInfo: (state, action) => {
+      console.log("action.payload", action.payload)
+      state.token = action.payload.data.token
+      state.userInfo.username = action.payload.data.username
+      state.userInfo.name = action.payload.data.name
+      state.userInfo._id = action.payload.data._id
+      state.userInfo.avatar = action.payload.data.avatar.url
+    }
+  },
+  extraReducers: (builder) => {
+    builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction) => {
+      console.log("fetch user info", action.payload)
+    })
+  }
 });
 
-export const {} = userSlice.actions;
+export const { setUserInfo } = userSlice.actions;
 
 export default userSlice.reducer;
