@@ -34,7 +34,6 @@ const initialState: userState = {
 
 
 
-
 export const userSlice = createSlice({
   name: "user",
   initialState,
@@ -46,7 +45,21 @@ export const userSlice = createSlice({
       state.userInfo.name = action.payload.data.name
       state.userInfo._id = action.payload.data._id
       state.userInfo.avatar = action.payload.data.avatar.url
+    },
+
+    logoutUser: (state) => {
+      localStorage.removeItem("chat-token")
+
+      state.token = ""
+      state.userInfo.username = ""
+      state.userInfo.name = ""
+      state.userInfo._id = ""
+      state.userInfo.avatar = ""
+
     }
+
+
+
   },
   extraReducers: (builder) => {
     builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction) => {
@@ -55,6 +68,6 @@ export const userSlice = createSlice({
   }
 });
 
-export const { setUserInfo } = userSlice.actions;
+export const { setUserInfo, logoutUser } = userSlice.actions;
 
 export default userSlice.reducer;

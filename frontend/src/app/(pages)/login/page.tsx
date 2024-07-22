@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useDispatch } from 'react-redux';
 import { setUserInfo } from '@/app/redux/feature/user';
-import { PublicRoute } from '@/app/auth/Auth';
+import { PublicRoute } from '@/app/component/auth/Auth';
 
 const validationSchema = Yup.object().shape({
     username: Yup.string().required('Username is required'),

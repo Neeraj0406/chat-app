@@ -23,3 +23,7 @@ body {
 .inputCon {
   @apply mb-3;
 }
+
+.flexCon {
+  @apply flex items-center;
+}

@@ -10,7 +10,7 @@ import { errorHandler } from '@/app/utils/commonFunction';
 import authServices from '@/app/services/authServices';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/redux/store"
-import { PublicRoute } from '@/app/auth/Auth';
+import { PublicRoute } from '@/app/component/auth/Auth';
 
 const Register = () => {
     const router = useRouter()
@@ -64,7 +64,6 @@ const Register = () => {
                         }}
                     >
                         {(formik) => {
-                            { console.log(formik.values) }
                             return (
                                 <Form>
 

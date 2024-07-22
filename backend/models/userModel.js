@@ -16,6 +16,7 @@ const userSchema = new Schema({
         select: false
     },
     bio: String,
+    friends: [{ type: Schema.Types.ObjectId, ref: "User", default: [] }],
     avatar: {
         public_id: {
             type: String,

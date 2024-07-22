@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
+import withMT from '@material-tailwind/react/utils/withMT';
 
-const config: Config = {
+const config: Partial<Config> = withMT({
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -8,6 +9,14 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      colors: {
+        mainColor: "#60a5fa", // Correct key name
+      },
+      height: {
+        "chatCon": 'calc(100vh - 60px)',
+        "chatHeight": 'calc(100vh - 240px)',
+
+      },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic":
@@ -16,5 +25,6 @@ const config: Config = {
     },
   },
   plugins: [],
-};
+});
+
 export default config;

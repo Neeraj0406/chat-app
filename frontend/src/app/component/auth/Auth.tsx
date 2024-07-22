@@ -38,8 +38,6 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
     const router = useRouter()
     const [loading, setLoading] = useState(true)
 
-    console.log("token private", token)
-
     useEffect(() => {
 
         if (!token) {
