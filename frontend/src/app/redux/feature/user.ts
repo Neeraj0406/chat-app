@@ -28,7 +28,7 @@ const initialState: userState = {
     avatar: "",
     name: ""
   },
-  token: localStorage.getItem("chat-token") || ""
+  token: ""
 };
 
 
@@ -39,7 +39,6 @@ export const userSlice = createSlice({
   initialState,
   reducers: {
     setUserInfo: (state, action) => {
-      console.log("action.payload", action.payload)
       state.token = action.payload.data.token
       state.userInfo.username = action.payload.data.username
       state.userInfo.name = action.payload.data.name
@@ -47,9 +46,12 @@ export const userSlice = createSlice({
       state.userInfo.avatar = action.payload.data.avatar.url
     },
 
+    setToken: (state, action) => {
+      state.token = action.payload
+    },
+
     logoutUser: (state) => {
       localStorage.removeItem("chat-token")
-
       state.token = ""
       state.userInfo.username = ""
       state.userInfo.name = ""
@@ -58,16 +60,13 @@ export const userSlice = createSlice({
 
     }
 
-
-
   },
   extraReducers: (builder) => {
     builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction) => {
-      console.log("fetch user info", action.payload)
     })
   }
 });
 
-export const { setUserInfo, logoutUser } = userSlice.actions;
+export const { setUserInfo, logoutUser, setToken } = userSlice.actions;
 
 export default userSlice.reducer;

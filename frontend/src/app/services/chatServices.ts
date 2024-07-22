@@ -1,5 +1,7 @@
 import axiosInstance from "../axios/axiosInstance";
 
 const ChatServices = {
-    // getFriends : () => axiosInstance.get()
+    search: (name: string | number) => axiosInstance.get(`user/search?name=${name}`)
 }
+
+export default ChatServices

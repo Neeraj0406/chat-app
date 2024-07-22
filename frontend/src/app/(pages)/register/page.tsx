@@ -11,10 +11,16 @@ import authServices from '@/app/services/authServices';
 import { useSelector } from 'react-redux';
 import { RootState } from "@/app/redux/store"
 import { PublicRoute } from '@/app/component/auth/Auth';
+import Image from 'next/image';
+import { MdEdit } from "react-icons/md";
+import { Button } from '@material-tailwind/react';
+import { useRef, useState } from 'react';
+
 
 const Register = () => {
     const router = useRouter()
-
+    const avatarRef = useRef<HTMLInputElement>(null)
+    const [previewImage, setPreviewImage] = useState<string>("")
 
     const validationSchema = Yup.object().shape({
         username: Yup.string().required('Username is required'),
@@ -45,6 +51,15 @@ const Register = () => {
         }
     }
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, formik: any) => {
+        if (e?.target?.files && e?.target?.files?.length > 0) {
+            let file = e?.target?.files[0]
+            formik.setFieldValue("avatar", file)
+            setPreviewImage(URL.createObjectURL(file))
+        }
+    }
+
+
     return (
         <PublicRoute>
             <div className="flex items-center justify-center bg-slate-400 h-screen w-screen">
@@ -68,8 +83,27 @@ const Register = () => {
                                 <Form>
 
                                     <div className="inputCon">
-                                        <label>Avatar</label>
-                                        <input type="file" className="input" name="avatar" onChange={e => formik.setFieldValue("avatar", e.target.files && e.target.files?.length > 0 ? e.target.files[0] : {})} />
+
+                                        <div className=" flex items-center justify-center flex-col ">
+                                            <img
+                                                src={previewImage || "/images/defaultUser.png"}
+                                                alt='Default user image'
+                                                className=' h-[100px] w-[100px] mb-1 rounded-full object-cover'
+                                            />
+                                            <span className=''>
+                                                <Button color="mainColor" onClick={() => avatarRef?.current?.click()}>Upload Image</Button>
+
+                                                <input
+                                                    type="file"
+                                                    ref={avatarRef}
+                                                    name="avatar"
+                                                    className="input hidden"
+                                                    onChange={e => handleImageUpload(e, formik)}
+                                                // onChange={e => formik.setFieldValue("avatar", e.target.files && e.target.files?.length > 0 ? e.target.files[0] : {})}
+                                                />
+
+                                            </span>
+                                        </div>
                                         <ErrorMessage className='error' name='avatar' component={"div"} />
                                     </div>
 

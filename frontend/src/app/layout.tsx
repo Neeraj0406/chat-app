@@ -4,6 +4,7 @@ import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import ReduxProvider from "./component/ReduxProvider";
 import "./globals.css";
+import ClientSideInitializer from "./component/ClientSideInitializer";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,12 +18,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en">
       <body className={inter.className}>
         <ToastContainer />
         <ReduxProvider>
-          {children}
+          <>
+            <ClientSideInitializer />
+            {children}
+          </>
         </ReduxProvider>
 
       </body>

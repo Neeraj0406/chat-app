@@ -36,6 +36,7 @@ const SenderMessage = () => {
                         width={40}
                         height={40}
                         className='rounded-full'
+                        
                     />
                     <p className='bg-mainColor rounded-md p-3'>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Adipisci, alias!</p>
                 </div>

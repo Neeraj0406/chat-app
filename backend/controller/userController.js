@@ -4,6 +4,8 @@ import { Request } from "../models/request.js";
 import { User } from "../models/userModel.js";
 import { showError, showResponse, showServerError } from "../utils/apiResponse.js";
 import { bcryptPassword, emitEvent, sendToken, uploadFilesToCloudinary, verifyPassword } from "../utils/helper.js";
+import mongoose from 'mongoose';
+const { ObjectId } = mongoose.Types;
 
 
 
@@ -268,4 +270,30 @@ const getMyFriends = async (req, res) => {
     }
 }
 
-export { acceptRequest, getMyFriends, getProfile, login, newUser, searchUser, sendFriendRequest, showAllRequest };
+
+const searchNewFriend = async (req, res) => {
+    try {
+        const { name: searchName } = req.query;
+        const userId = req.id;
+
+        const newUser = await User.aggregate([
+            {
+                $match: {
+                    _id: { $ne: new ObjectId(userId) }
+                }
+                
+
+            }
+        ])
+
+
+        return showResponse(res, { newUser })
+
+    } catch (error) {
+        console.log(error)
+        return showServerError(res)
+    }
+}
+
+
+export { acceptRequest, getMyFriends, getProfile, login, newUser, searchUser, sendFriendRequest, showAllRequest, searchNewFriend };

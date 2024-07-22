@@ -7,3 +7,5 @@ export const errorHandler = (error: any) => {
         toast.error("Something went wrong!!")
     }
 }
+
+

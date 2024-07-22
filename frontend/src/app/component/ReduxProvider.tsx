@@ -1,13 +1,15 @@
 // providers/ReduxProvider.tsx
 'use client'; // This is required for Client Component
 
-import React, { useEffect } from 'react';
-import { Provider, useDispatch } from 'react-redux';
 import store from '@/app/redux/store';
-import { fetchUserData } from '@/app/redux/feature/user';
-import { AppDispatch } from '@/app/redux/store';
+import React from 'react';
+import { Provider } from 'react-redux';
 
 const ReduxProvider = ({ children }: { children: React.ReactNode }) => {
+
+
+
+
     return <Provider store={store}>{children}</Provider>;
 };
 

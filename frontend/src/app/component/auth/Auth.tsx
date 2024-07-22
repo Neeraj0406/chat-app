@@ -5,14 +5,12 @@ import { useSelector } from 'react-redux';
 import { RootState } from "@/app/redux/store";
 import { useRouter } from 'next/navigation';
 
-interface PublicRouteProps {
-    children: ReactNode;
-}
-interface PrivateRouteProps {
+interface RouteProps {
     children: ReactNode;
 }
 
-const PublicRoute = ({ children }: PublicRouteProps) => {
+
+const PublicRoute = ({ children }: RouteProps) => {
 
     const router = useRouter()
     const { token } = useSelector((state: RootState) => state.user)
@@ -20,11 +18,15 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
 
 
     useEffect(() => {
+        console.log("token", token)
         if (token) {
             return router.push("/")
         }
-        setLoading(false)
-    }, [])
+        setTimeout(() => {
+            setLoading(false)
+        }, 1000)
+    }, [token])
+
 
     return (
         <>
@@ -33,7 +35,7 @@ const PublicRoute = ({ children }: PublicRouteProps) => {
     )
 }
 
-const PrivateRoute = ({ children }: PrivateRouteProps) => {
+const PrivateRoute = ({ children }: RouteProps) => {
     const { token } = useSelector((state: RootState) => state.user)
     const router = useRouter()
     const [loading, setLoading] = useState(true)
@@ -43,8 +45,10 @@ const PrivateRoute = ({ children }: PrivateRouteProps) => {
         if (!token) {
             return router.push("/login")
         }
-        setLoading(false)
-    }, [])
+        setTimeout(() => {
+            setLoading(false)
+        }, 1000)
+    }, [token])
 
 
 
