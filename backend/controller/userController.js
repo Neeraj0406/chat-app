@@ -59,7 +59,7 @@ const login = async (req, res) => {
     try {
         const { username, password } = req.body
         let usernameFound = await User.findOne({ username }).select("+password").lean()
-
+        console.log(usernameFound)
         if (!usernameFound) {
             return showError(res, "Invalid username or password")
         }
@@ -192,7 +192,6 @@ const sendFriendRequest = async (req, res) => {
 const acceptRequest = async (req, res) => {
     try {
         const { requestId, status } = req.body
-        console.log("requestId, status", requestId, status)
 
         const request = await Request.findById(requestId).populate("sender", "name").populate("receiver", "name")
         if (!request) {
@@ -232,24 +231,87 @@ const acceptRequest = async (req, res) => {
 }
 
 
+// const showAllRequest = async (req, res) => {
+//     try {
+//         const { pageSize, pageNumber, search } = req.body
+
+//         const skipCon = {
+//             limit: pageSize,
+//             skip: (pageNumber - 1) * pageSize
+//         }
+
+//         const con = {
+//             receiver: req.id,
+//         }
+
+//         if (search) {
+//             con["$or"] = [
+//                 { "sender.name": new RegExp(search, "i") },
+//             ]
+
+//         }
+
+//         const request = await Request.find(con, {}, skipCon).populate("sender", "name avatar")
+
+//         console.log("request", request)
+//         let requestsData = request.map(({ _id, sender }) => ({
+//             _id,
+//             sender: {
+//                 sender_id: sender._id,
+//                 name: sender.name,
+//                 avatar: sender.avatar
+//             }
+//         }))
+//         return showResponse(res, requestsData, "All request fetched")
+//     } catch (error) {
+//         return showServerError(res)
+//     }
+// }
+
 const showAllRequest = async (req, res) => {
     try {
-        const request = await Request.find({
-            receiver: req.id
-        }).populate("sender", "name avatar")
-        let requestsData = request.map(({ _id, sender }) => ({
+        const { pageSize, pageNumber, search } = req.body;
+
+        const limit = parseInt(pageSize, 10) || 10;
+        const skip = (parseInt(pageNumber, 10) - 1) * limit || 0;
+
+        // Build the query condition
+        const con = { receiver: req.id };
+
+        if (search) {
+            con["$or"] = [
+                { "sender.name": new RegExp(search, "i") }
+            ];
+        }
+
+        // Fetch requests with pagination and populate sender details
+        const requests = await Request.find(con)
+            .skip(skip)
+            .limit(limit)
+            .populate({
+                path: 'sender',
+                select: 'name avatar'
+            });
+
+        console.log("Requests with Population:", requests);
+
+        // Map and format the requests data
+        const requestsData = requests.map(({ _id, sender }) => ({
             _id,
             sender: {
                 sender_id: sender._id,
                 name: sender.name,
-                avatar: sender.avatar.url
+                avatar: sender.avatar
             }
-        }))
-        return showResponse(res, requestsData, "All request fetched")
+        }));
+
+        return showResponse(res, requestsData, "All requests fetched");
     } catch (error) {
-        return showServerError(res)
+        console.error("Error fetching requests:", error);
+        return showServerError(res);
     }
-}
+};
+
 
 const getMyFriends = async (req, res) => {
     try {
@@ -273,21 +335,83 @@ const getMyFriends = async (req, res) => {
 
 const searchNewFriend = async (req, res) => {
     try {
-        const { name: searchName } = req.query;
         const userId = req.id;
+        const { pageSize, pageNumber, search: searchName } = req.body;
 
-        const newUser = await User.aggregate([
+        let con = {
+            _id: { $ne: new ObjectId(userId) },
+            name: new RegExp(searchName, "i")
+        }
+
+
+        const totalCount = await User.countDocuments(con);
+
+
+        const newUsers = await User.aggregate([
             {
-                $match: {
-                    _id: { $ne: new ObjectId(userId) }
+                $match: con
+            },
+            {
+                $lookup: {
+                    from: "requests",
+                    let: { otherUserId: "$_id" },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: {
+                                    $or: [
+                                        { $and: [{ $eq: ["$sender", new ObjectId(userId)] }, { $eq: ["$receiver", "$$otherUserId"] }] },
+                                        { $and: [{ $eq: ["$sender", "$$otherUserId"] }, { $eq: ["$receiver", new ObjectId(userId)] }] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: "requests"
                 }
-                
+            },
+            {
+                $project: {
+                    name: 1,
+                    username: 1,
+                    "avatar.url": 1,
 
+                    status: { $gt: [{ $size: "$requests" }, 0] },
+
+                    pendingFromOurSide: {
+                        $cond: {
+                            if: { $gt: [{ $size: "$requests" }, 0] },
+                            then: {
+                                $anyElementTrue: {
+                                    $map: {
+                                        input: "$requests",
+                                        as: "request",
+                                        in: { $eq: ["$$request.receiver", new ObjectId(userId)] }
+                                    }
+                                }
+                            },
+                            else: false
+                        }
+                    },
+                    requestId: {
+                        $cond: {
+                            if: { $gt: [{ $size: "$requests" }, 0] },
+                            then: { $arrayElemAt: ["$requests._id", 0] },
+                            else: null
+                        }
+                    }
+
+                }
+            },
+            {
+                $skip: (pageNumber - 1) * pageSize
+            },
+            {
+                $limit: pageSize
             }
         ])
 
-
-        return showResponse(res, { newUser })
+        return showResponse(res, { data: newUsers, totalCount })
 
     } catch (error) {
         console.log(error)

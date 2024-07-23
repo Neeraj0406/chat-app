@@ -22,3 +22,50 @@ export type userSliceState = {
     }
   }
 }
+
+
+export type serachUserType = {
+  _id: string,
+  name: string,
+  username: string,
+  requestId: string,
+  avatar: {
+    url: ""
+  },
+  status: boolean,
+  pendingFromOurSide: boolean,
+
+}
+
+export type searchUserPayloadType = {
+  search?: string | number,
+  pageNumber: number,
+  pageSize: number
+}
+
+type PageNameType = "searchUserPage" | "requestPage";
+export type userListPropsType = {
+  pageName: PageNameType,
+  buttonName: string,
+  pageHeading: string
+}
+
+
+export type friendRequestType = {
+  _id: string,
+  sender: {
+    name: string,
+    sender_id: string
+    username: string,
+    avatar: {
+      url: string
+      public_id: string
+    }
+  }
+}
+
+
+export type requestAcceptRejectPayloadType = {
+  requestId: string,
+  status: boolean
+}

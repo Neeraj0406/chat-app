@@ -3,7 +3,8 @@ import ChatServices from '@/app/services/chatServices'
 import { errorHandler } from '@/app/utils/commonFunction'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import AddNewUser from '../header/AddNewUser'
+import AddNewUser from './AddNewUser'
+import FriendRequest from './FriendRequest'
 
 
 
@@ -23,8 +24,8 @@ const Sidebar = () => {
 
     const searchUser = async () => {
         try {
-            const res = await ChatServices.search(debouceValue)
-            console.log("result", res)
+            // const res = await ChatServices.serachNewUser(debouceValue)
+            // console.log("result", res)
         } catch (error) {
             errorHandler(error)
         }
@@ -42,7 +43,10 @@ const Sidebar = () => {
     return (
         <div className=' w-1/4 h-chatCon border-r border'>
             <div className='m-2'>
-                <AddNewUser />
+                <div className="flex justify-end gap-1">
+                    <FriendRequest />
+                    <AddNewUser />
+                </div>
                 <input
                     type='text'
                     className='input border  border-black w-full'

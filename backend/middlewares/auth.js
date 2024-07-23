@@ -4,7 +4,6 @@ import { verifyToken } from "../utils/helper.js";
 
 const isAuthenticatedUser = async (req, res, next) => {
     try {
-        console.log(req.headers)
         const token = req.headers.token?.split(" ")[1]
 
         if (!token) {
@@ -18,6 +17,7 @@ const isAuthenticatedUser = async (req, res, next) => {
         }
 
         req.id = decodedToken._id;
+        console.log("req.id", req.id)
         next();
 
     } catch (error) {

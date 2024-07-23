@@ -15,6 +15,7 @@ const Logout = () => {
 
     const handleLogout = () => {
         dispatch(logoutUser())
+        localStorage.removeItem("chat-token")
         router.push("/login")
         toast.success("Logged out successfully")
     }

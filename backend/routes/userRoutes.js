@@ -15,9 +15,9 @@ router.get("/profile", isAuthenticatedUser, getProfile)
 router.get("/search-my-friends", isAuthenticatedUser, searchUser)
 router.post("/send-request", isAuthenticatedUser, sendFriendRequest)
 router.post("/accept-request", isAuthenticatedUser, acceptRequest)
-router.get("/show-all-requests", isAuthenticatedUser, showAllRequest)
+router.post("/show-all-requests", isAuthenticatedUser, showAllRequest)
 router.get("/my-friends", isAuthenticatedUser, getMyFriends)
-router.get("/search", isAuthenticatedUser, searchNewFriend)
+router.post("/search", isAuthenticatedUser, searchNewFriend)
 
 
 export default router

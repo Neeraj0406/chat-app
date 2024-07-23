@@ -51,7 +51,7 @@ export const userSlice = createSlice({
     },
 
     logoutUser: (state) => {
-      localStorage.removeItem("chat-token")
+      
       state.token = ""
       state.userInfo.username = ""
       state.userInfo.name = ""
