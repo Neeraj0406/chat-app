@@ -21,6 +21,7 @@ export default function RootLayout({
 
   return (
     <html lang="en">
+      <title>Chat Me</title>
       <body className={inter.className}>
         <ToastContainer />
         <ReduxProvider>

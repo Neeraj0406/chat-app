@@ -101,28 +101,22 @@ const getProfile = async (req, res) => {
 
 
 
-
-
-const searchUser = async (req, res) => {
+const searchMyFriends = async (req, res) => {
     try {
         const { name } = req.query
 
-        const myChats = await Chat.find({
-            groupChat: false,
-            members: { $in: req.id }
+        const userDetails = await User.findById(req.id)
+
+        const allMyFriends = await User.find({
+            friends: { $in: [req.id] },
+            _id: { $ne: req.id }
         })
 
-        const allUserFromMyChats = myChats?.flatMap((chat) => chat.members)
-        console.log("name", name);
 
-        const allUserExceptFriends = await User.find(
-            {
-                _id: { $nin: allUserFromMyChats },
-                name: new RegExp(name, "i")
-            },
-        ).select("name avatar")
 
-        return showResponse(res, allUserExceptFriends)
+
+
+        return showResponse(res, allMyFriends)
 
 
 
@@ -209,6 +203,21 @@ const acceptRequest = async (req, res) => {
         }
 
         else {
+            const isChatAlreadyPresent = await Chat.findOne({
+                groupChat: false,
+                members: {
+                    $all: [request.receiver._id, request.sender._id]
+                }
+            })
+
+
+            if (isChatAlreadyPresent) {
+                await Request.deleteOne({ _id: requestId })
+                return showError(res, "You both are already friends")
+            }
+
+
+
             const members = [request.sender._id, request.receiver._id]
             const [newChat, deletedRequest] = await Promise.all([
                 Chat.create({
@@ -218,6 +227,15 @@ const acceptRequest = async (req, res) => {
                 request.deleteOne()
             ])
 
+            const [senderDetails, recieverDetials] = await Promise.all([User.findById(request.sender._id), User.findById(request.receiver._id)]);
+            senderDetails.friends.push(request.receiver._id)
+            recieverDetials.friends.push(request.sender._id)
+
+            await senderDetails.save()
+            await recieverDetials.save()
+
+
+
             emitEvent(req, EmitEvents.REFETCH_CHATS, members)
 
             return showResponse(res, newChat, "Request accepted successfully")
@@ -226,106 +244,172 @@ const acceptRequest = async (req, res) => {
 
 
     } catch (error) {
+        console.log(error)
         return showServerError(res)
     }
 }
 
 
-// const showAllRequest = async (req, res) => {
-//     try {
-//         const { pageSize, pageNumber, search } = req.body
-
-//         const skipCon = {
-//             limit: pageSize,
-//             skip: (pageNumber - 1) * pageSize
-//         }
-
-//         const con = {
-//             receiver: req.id,
-//         }
-
-//         if (search) {
-//             con["$or"] = [
-//                 { "sender.name": new RegExp(search, "i") },
-//             ]
-
-//         }
-
-//         const request = await Request.find(con, {}, skipCon).populate("sender", "name avatar")
-
-//         console.log("request", request)
-//         let requestsData = request.map(({ _id, sender }) => ({
-//             _id,
-//             sender: {
-//                 sender_id: sender._id,
-//                 name: sender.name,
-//                 avatar: sender.avatar
-//             }
-//         }))
-//         return showResponse(res, requestsData, "All request fetched")
-//     } catch (error) {
-//         return showServerError(res)
-//     }
-// }
-
 const showAllRequest = async (req, res) => {
     try {
-        const { pageSize, pageNumber, search } = req.body;
+        const { pageSize, pageNumber, search } = req.body
 
-        const limit = parseInt(pageSize, 10) || 10;
-        const skip = (parseInt(pageNumber, 10) - 1) * limit || 0;
-
-        // Build the query condition
-        const con = { receiver: req.id };
-
-        if (search) {
-            con["$or"] = [
-                { "sender.name": new RegExp(search, "i") }
-            ];
+        const skipCon = {
+            limit: pageSize,
+            skip: (pageNumber - 1) * pageSize
         }
 
-        // Fetch requests with pagination and populate sender details
-        const requests = await Request.find(con)
-            .skip(skip)
-            .limit(limit)
-            .populate({
-                path: 'sender',
-                select: 'name avatar'
-            });
+        // const allRequest = await Request.aggregate([
+        //     {
+        //         $match: {
+        //             receiver: new ObjectId(req.id)
+        //         }
+        //     },
+        //     {
+        //         $lookup: {
+        //             from: "users",
+        //             as: "sender",
+        //             foreignField: "_id",
+        //             localField: "sender"
+        //         }
+        //     },
+        //     {
+        //         $unwind: "$sender"
+        //     },
+        //     {
+        //         $match: {
+        //             "sender.name": new RegExp(search, "i")
+        //         }
+        //     },
+        //     {
+        //         $skip: (pageNumber - 1) * pageSize
+        //     },
+        //     {
+        //         $limit: pageSize
+        //     }
+        // ])
 
-        console.log("Requests with Population:", requests);
+        const allRequestPromise = Request.aggregate([
+            {
+                $match: {
+                    receiver: new ObjectId(req.id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    as: "sender",
+                    localField: "sender",
+                    foreignField: "_id"
 
-        // Map and format the requests data
-        const requestsData = requests.map(({ _id, sender }) => ({
-            _id,
-            sender: {
-                sender_id: sender._id,
-                name: sender.name,
-                avatar: sender.avatar
+                }
+            },
+            {
+                $unwind: "$sender"
+            },
+            {
+                $match: {
+                    "sender.name": new RegExp(search, "i")
+                }
+            },
+            {
+                $project: {
+                    "_id": 1,
+                    "sender.name": 1,
+                    "sender.username": 1,
+                    "sender.avatar.url": 1
+                }
+            },
+
+            {
+                $skip: (pageNumber - 1) * pageSize
+            },
+            {
+                $limit: pageSize
             }
-        }));
+        ])
 
-        return showResponse(res, requestsData, "All requests fetched");
+        const totalCountPromise = Request.aggregate([
+            {
+                $match: {
+                    receiver: new ObjectId(req.id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    as: "sender",
+                    localField: "sender",
+                    foreignField: "_id"
+
+                }
+            },
+            {
+                $match: {
+                    "sender.name": new RegExp(search, "i")
+                }
+            },
+            {
+                $count: "total"
+            },
+        ])
+
+
+        const [allRequest, totalCount] = await Promise.all([allRequestPromise, totalCountPromise])
+        return showResponse(res, { allRequest, totalCount: totalCount[0]?.total })
+
     } catch (error) {
-        console.error("Error fetching requests:", error);
-        return showServerError(res);
+        console.log(error)
+        return showServerError(res)
     }
-};
+}
+
 
 
 const getMyFriends = async (req, res) => {
     try {
-        // const allMembers = await Chat.find({
-        //     groupChat: false,
-        //     members: req.id
-        // }).populate("members")
+        const { name: searchName } = req.query
 
-        // const myFriends = allMembers.flatMap(({ members }) => members)?.filter(({ _id }) => _id?.toString() != req.id?.toString())
-        // const uniqueFriends = []
-        // // myFriends?.map((friend) =>{
-        // //     uniqueFriends?.find((ufriend))
-        // // })
-        // return showResponse(res, { myFriends, uniqueFriends, allMembers })
+        const myFriends = await User.aggregate([
+            {
+                $match: {
+                    _id: new ObjectId(req.id)
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    as: "friend",
+                    localField: "friends",
+                    foreignField: "_id"
+                }
+            },
+            {
+                $unwind: "$friend"
+            },
+            {
+                $match: searchName ? { "friend.name": new RegExp(searchName, "i") } : {}
+
+            },
+            {
+                $project: {
+                    "friend._id": 1,
+                    "friend.name": 1,
+                    "friend.username": 1,
+                    "friend.avatar.url": 1,
+
+                }
+            }
+        ])
+
+        // const myFriends = await User.findById(req.id).populate({
+        //     path: 'friends',
+        //     select: 'name username avatar.url'
+        // });
+
+
+
+        return showResponse(res, myFriends)
     } catch (error) {
         console.log(error)
         return showServerError(res)
@@ -340,9 +424,12 @@ const searchNewFriend = async (req, res) => {
 
         let con = {
             _id: { $ne: new ObjectId(userId) },
-            name: new RegExp(searchName, "i")
+            friends: { $nin: [new ObjectId(userId)] }
         }
 
+        if (searchName) {
+            con.name = new RegExp(searchName, "i")
+        }
 
         const totalCount = await User.countDocuments(con);
 
@@ -351,6 +438,7 @@ const searchNewFriend = async (req, res) => {
             {
                 $match: con
             },
+
             {
                 $lookup: {
                     from: "requests",
@@ -420,4 +508,4 @@ const searchNewFriend = async (req, res) => {
 }
 
 
-export { acceptRequest, getMyFriends, getProfile, login, newUser, searchUser, sendFriendRequest, showAllRequest, searchNewFriend };
+export { acceptRequest, getMyFriends, getProfile, login, newUser, searchMyFriends, sendFriendRequest, showAllRequest, searchNewFriend };

@@ -2,19 +2,28 @@
 
 "use client"
 import ChatServices from '@/app/services/chatServices';
-import { friendRequestType, searchUserPayloadType, serachUserType, userListPropsType } from '@/app/types/commonType';
+import { friendRequestType, paginDataType, searchUserPayloadType, serachUserType, userListPropsType } from '@/app/types/commonType';
 import { errorHandler } from '@/app/utils/commonFunction';
 import { Button } from '@material-tailwind/react'
 import React, { useEffect, useState } from 'react'
 import { toast } from 'react-toastify';
+import Pagination from '../Pagination';
+
+type paginDataInterface = {
+    data: serachUserType[],
+    totalCount: number
+}
 
 const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
     const [isOpen, setIsOpen] = useState<boolean>(false);
-    const [searchUser, setSearchUser] = useState<string | number>("")
-    const [allUserList, setAllUserList] = useState<serachUserType[]>([])
+    const [searchUser, setSearchUser] = useState<string | number>("") // just to handle handle debouncing
     const [loading, setLoading] = useState<boolean>(true)
+    const [paginData, setPaginData] = useState<paginDataInterface>({
+        data: [],
+        totalCount: 0,
+    })
     const [payload, setPayload] = useState<searchUserPayloadType>({
-        pageSize: 10,
+        pageSize: 5,
         pageNumber: 1,
         search: ""
     })
@@ -22,8 +31,15 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
     const openModal = () => setIsOpen(true);
     const closeModal = () => {
         setIsOpen(false)
-        setAllUserList([])
-
+        setPaginData({
+            data: [],
+            totalCount: 0,
+        })
+        setPayload({
+            pageSize: 5,
+            pageNumber: 1,
+            search: ""
+        })
         setSearchUser("")
     };
 
@@ -31,7 +47,6 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
     useEffect(() => {
         const handleTimer = setTimeout(() => {
             setPayload({ ...payload, search: searchUser })
-            setAllUserList([])
         }, 500)
 
         return () => clearTimeout(handleTimer)
@@ -43,9 +58,8 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
 
             setLoading(true)
             const res = await ChatServices.serachNewUser(payload)
-            console.log(res)
+            setPaginData({ data: res?.data?.data?.data, totalCount: res?.data?.data?.totalCount })
             setLoading(false)
-            setAllUserList(res?.data?.data?.data || [])
         } catch (error) {
             errorHandler(error)
         }
@@ -55,8 +69,8 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
         try {
 
             setLoading(true)
-            const res = await ChatServices.showFriendRequest()
-            const modifiedData = res?.data?.data?.map((data: friendRequestType) => {
+            const res = await ChatServices.showFriendRequest(payload)
+            const modifiedData = res?.data?.data?.allRequest?.map((data: friendRequestType) => {
                 return {
                     _id: data?.sender?.sender_id,
                     name: data?.sender?.name,
@@ -69,10 +83,8 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
                     requestId: data?._id
                 }
             })
+            setPaginData({ data: modifiedData, totalCount: res?.data?.data?.totalCount })
             setLoading(false)
-            setAllUserList(modifiedData || [])
-
-            console.log(res)
             setLoading(false)
         } catch (error) {
             errorHandler(error)
@@ -95,7 +107,6 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
             const res = await ChatServices.sendRequest(userId)
             toast.success(res.data.message)
             fetchUser()
-            console.log(res)
         } catch (error) {
             errorHandler(error)
         }
@@ -115,6 +126,7 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
                 fetchRequest()
             }
         } catch (error) {
+            fetchUser()
             errorHandler(error)
         }
     }
@@ -166,20 +178,20 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
 
 
                         <div className="relative p-4  text-base  overflow-y-auto  border-t border-b border-t-blue-gray-100 border-b-blue-gray-100 ">
-                            {pageName == "searchUserPage" && (
-                                <input
-                                    type="text"
-                                    className='input border'
-                                    placeholder='Search User'
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchUser(e.target.value)}
-                                    value={searchUser}
-                                />
-                            )}
+
+                            <input
+                                type="text"
+                                className='input border'
+                                placeholder='Search User'
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchUser(e.target.value)}
+                                value={searchUser}
+                            />
+
 
                             <div className="flex flex-wrap gap-2 max-h-[400px]  mt-2  overflow-y-auto ">
                                 {loading && <div className='my-5 text-center w-full'> Loading...</div>}
-                                {(allUserList?.length < 1 && !loading) && <div className='my-5 text-center w-full'> No user found</div>}
-                                {allUserList?.map((user, id) => (
+                                {(paginData?.data?.length < 1 && !loading) && <div className='my-5 text-center w-full'> No user found</div>}
+                                {paginData?.data?.map((user, id) => (
                                     <div className=" w-[230px] border flex items-center justify-evenly py-4 px-1 flex-col gap-2" key={id}>
                                         <img src={user?.avatar?.url || "/images/defaultUser.png"} alt="user image" className='h-[80px] w-[80px] rounded-full' />
                                         <div className="">
@@ -198,6 +210,7 @@ const UserList = ({ pageName, buttonName, pageHeading }: userListPropsType) => {
                                     </div>
                                 ))}
                             </div>
+                            {paginData?.data?.length > 0 && <Pagination payload={payload} setPayload={setPayload} totalDocumentCount={paginData.totalCount} />}
 
 
                         </div>

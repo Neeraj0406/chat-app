@@ -5,39 +5,50 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import AddNewUser from './AddNewUser'
 import FriendRequest from './FriendRequest'
+import { sidebarFriendsType } from '@/app/types/commonType'
+import Link from 'next/link'
 
 
 
 const Sidebar = () => {
 
     const [inputValue, setInputValue] = useState("")
-    const [debouceValue, setDebounceValue] = useState("")
+    const [allFriends, setAllFriends] = useState<sidebarFriendsType[]>([])
+    const [filterFriends, setFilteredFriends] = useState<sidebarFriendsType[]>([])
+    const [loading, setLoading] = useState(true)
 
-    useEffect(() => {
-        const handleTimer = setTimeout(() => {
-            setDebounceValue(inputValue)
-        }, 500)
-
-        return () => clearTimeout(handleTimer)
-    }, [inputValue])
-
-
-    const searchUser = async () => {
+    const fetchFriendList = async () => {
         try {
-            // const res = await ChatServices.serachNewUser(debouceValue)
-            // console.log("result", res)
+            setLoading(true)
+            const res = await ChatServices.getMyFriends()
+            setAllFriends(res.data.data)
+            setFilteredFriends(res.data.data)
         } catch (error) {
             errorHandler(error)
+        } finally {
+            setLoading(false)
         }
     }
 
+    useEffect(() => {
+        fetchFriendList()
+    }, [])
+
 
     useEffect(() => {
-        if (debouceValue) {
-            searchUser()
+        if (inputValue?.length > 0) {
+            let filteredFriends = allFriends?.filter((data) => {
+                if (data?.friend?.name?.toLowerCase()?.includes(inputValue?.toLowerCase())) {
+                    return data
+                }
+            })
+            setFilteredFriends(filteredFriends)
+        } else {
+            setFilteredFriends(allFriends)
         }
-    }, [debouceValue])
+    }, [inputValue])
 
+    console.log("allFriends", allFriends)
 
 
     return (
@@ -56,63 +67,25 @@ const Sidebar = () => {
                 />
             </div>
 
-            <div className="w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
-                <Image
-                    src="https://picsum.photos/200"
-                    alt="user-image"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                    objectFit="cover"
-                />
-                <div className="w-48">
-                    <h3 className='font-semibold'>Neeraj</h3>
-                    <p className='text-sm truncate  '>Message : Hello  Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello </p>
-                </div>
+            {loading && <p className='text-center mt-10'>List is loading...</p>}
+            {!loading && filterFriends?.map((data, key) => (
+                <Link href={`/?chatId=${data?.friend?._id}`}>
+                    <div className="w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
+                        <img
+                            src={data?.friend?.avatar?.url}
+                            alt="user-image"
+                            className="rounded-full h-[50px] w-[50px]"
 
-            </div>
-            <div className="  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
-                <Image
-                    src="https://picsum.photos/200"
-                    alt="user-image"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                    objectFit="cover"
-                />
-                <div className="w-48">
-                    <h3 className='font-semibold'>Neeraj</h3>
-                    <p className='text-sm truncate  '>Message : Hello  Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello </p>
-                </div>
-            </div>
-            <div className="  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
-                <Image
-                    src="https://picsum.photos/200"
-                    alt="user-image"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                    objectFit="cover"
-                />
-                <div className="w-48">
-                    <h3 className='font-semibold'>Neeraj</h3>
-                    <p className='text-sm truncate  '>Message : Hello  Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello </p>
-                </div>
-            </div>
-            <div className="  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
-                <Image
-                    src="https://picsum.photos/200"
-                    alt="user-image"
-                    width={50}
-                    height={50}
-                    className="rounded-full"
-                    objectFit="cover"
-                />
-                <div className="w-48">
-                    <h3 className='font-semibold'>Neeraj</h3>
-                    <p className='text-sm truncate  '>Message : Hello  Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello Hello </p>
-                </div>
-            </div>
+                        />
+                        <div className="w-48">
+                            <h3 className='font-semibold'>{data?.friend?.name}</h3>
+                            <p className='text-sm truncate  '>Message : Lorem ipsum dolor sit amet consectetur adipisicing elit. Unde quas eius voluptate amet nostrum ab iste incidunt expedita dicta, culpa assumenda, aliquam dignissimos placeat est quasi voluptas pariatur similique minus enim fugit voluptatibus consequuntur, tenetur cupiditate nulla? Iste perferendis quia, maiores deserunt maxime debitis dolorem nobis repudiandae ea. Ratione, nostrum. </p>
+                        </div>
+
+                    </div>
+                </Link>
+            ))}
+
 
 
         </div>

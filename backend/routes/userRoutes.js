@@ -1,5 +1,5 @@
 import express from "express"
-import { acceptRequest, getMyFriends, getProfile, login, newUser, searchNewFriend, searchUser, sendFriendRequest, showAllRequest } from "../controller/userController.js"
+import { acceptRequest, getMyFriends, getProfile, login, newUser, searchNewFriend, searchMyFriends, sendFriendRequest, showAllRequest } from "../controller/userController.js"
 import { isAuthenticatedUser } from "../middlewares/auth.js"
 import { upload } from "../middlewares/multer.js"
 import ValidateRequest from "../middlewares/requestValidate.js"
@@ -12,7 +12,7 @@ router.post("/login", ValidateRequest(loginValidation), login)
 
 router.get("/profile", isAuthenticatedUser, getProfile)
 
-router.get("/search-my-friends", isAuthenticatedUser, searchUser)
+router.get("/search-my-friends", isAuthenticatedUser, searchMyFriends)
 router.post("/send-request", isAuthenticatedUser, sendFriendRequest)
 router.post("/accept-request", isAuthenticatedUser, acceptRequest)
 router.post("/show-all-requests", isAuthenticatedUser, showAllRequest)

@@ -4,8 +4,9 @@ import { requestAcceptRejectPayloadType, searchUserPayloadType } from "../types/
 const ChatServices = {
     serachNewUser: (values: searchUserPayloadType) => axiosInstance.post(`user/search`, values),
     sendRequest: (userId: string) => axiosInstance.post(`user/send-request`, { userId }),
-    showFriendRequest: () => axiosInstance.get(`user/show-all-requests`),
-    acceptRejectRequest: (payload: requestAcceptRejectPayloadType) => axiosInstance.post("user/accept-request", payload)
+    showFriendRequest: (payload: searchUserPayloadType) => axiosInstance.post(`user/show-all-requests`, payload),
+    acceptRejectRequest: (payload: requestAcceptRejectPayloadType) => axiosInstance.post("user/accept-request", payload),
+    getMyFriends: () => axiosInstance.get("user/my-friends")
 
 }
 

@@ -69,3 +69,21 @@ export type requestAcceptRejectPayloadType = {
   requestId: string,
   status: boolean
 }
+
+
+export type paginDataType = {
+  data: any,
+  totalCount: number,
+}
+
+export type sidebarFriendsType = {
+  _id: string,
+  friend: {
+    _id: string,
+    name: string,
+    username: string,
+    avatar: {
+      url: string
+    }
+  }
+}

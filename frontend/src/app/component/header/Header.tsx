@@ -1,4 +1,5 @@
 
+import CreateGroup from './CreateGroup'
 import Logout from './Logout'
 
 const Header = () => {
@@ -10,8 +11,9 @@ const Header = () => {
             <div className="flex items-center justify-between">
                 <span className=" font-semibold text-white  text-xl ">ChatMe</span>
 
-                <div className="flex items-center gap-4">
-                
+                <div className="flex items-center gap-6">
+
+                    <CreateGroup />
                     <Logout />
                 </div>
             </div>
