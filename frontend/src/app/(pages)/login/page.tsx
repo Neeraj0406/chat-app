@@ -1,16 +1,16 @@
 "use client"
-import React from 'react';
-import { Formik, Form, Field, useFormikContext, ErrorMessage } from 'formik';
-import * as Yup from 'yup';
+import { PublicRoute } from '@/app/component/auth/Auth';
+import { setToken, setUserInfo } from '@/app/redux/feature/user';
+import authServices from '@/app/services/authServices';
 import { LoginType } from '@/app/types/commonType';
 import { errorHandler } from '@/app/utils/commonFunction';
-import authServices from '@/app/services/authServices';
-import { toast } from 'react-toastify';
-import { useRouter } from 'next/navigation';
+import { ErrorMessage, Field, Form, Formik } from 'formik';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import React from 'react';
 import { useDispatch } from 'react-redux';
-import { setUserInfo } from '@/app/redux/feature/user';
-import { PublicRoute } from '@/app/component/auth/Auth';
+import { toast } from 'react-toastify';
+import * as Yup from 'yup';
 
 const validationSchema = Yup.object().shape({
     username: Yup.string().required('Username is required'),
@@ -24,11 +24,14 @@ const Login: React.FC = () => {
     const handleLogin = async (values: LoginType, setSubmitting: (isSubmitting: boolean) => void) => {
         try {
             const res = await authServices.login(values)
+            setTimeout(() => {
+                router.push("/");
+            }, 1000);
             toast.success(res.data.message)
             localStorage.setItem("chat-token", res.data.data.token)
             dispatch(setUserInfo(res.data))
+            dispatch(setToken(res.data.data.token))
 
-            router.push("/")
         } catch (error) {
             errorHandler(error)
         } finally {

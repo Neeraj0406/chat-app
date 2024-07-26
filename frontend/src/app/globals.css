@@ -17,7 +17,7 @@ body {
   @apply px-5 py-2 text-black bg-white rounded-lg border-2 hover:bg-blue-700 hover:text-white;
 }
 .error {
-  @apply text-red-500;
+  @apply text-red-500 text-sm;
 }
 
 .inputCon {

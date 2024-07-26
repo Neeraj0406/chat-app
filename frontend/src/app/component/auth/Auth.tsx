@@ -1,9 +1,8 @@
 "use client"
-import { cookies } from 'next/headers'
-import React, { ReactNode, useEffect, useState } from 'react'
-import { useSelector } from 'react-redux';
 import { RootState } from "@/app/redux/store";
 import { useRouter } from 'next/navigation';
+import { ReactNode, useEffect, useState } from 'react';
+import { useSelector } from 'react-redux';
 
 interface RouteProps {
     children: ReactNode;
@@ -18,13 +17,11 @@ const PublicRoute = ({ children }: RouteProps) => {
 
 
     useEffect(() => {
-        console.log("token", token)
         if (token) {
             return router.push("/")
         }
-        setTimeout(() => {
-            setLoading(false)
-        }, 1000)
+        setLoading(false)
+
     }, [token])
 
 
@@ -45,9 +42,8 @@ const PrivateRoute = ({ children }: RouteProps) => {
         if (!token) {
             return router.push("/login")
         }
-        setTimeout(() => {
-            setLoading(false)
-        }, 1000)
+        setLoading(false)
+
     }, [token])
 
 
@@ -59,4 +55,4 @@ const PrivateRoute = ({ children }: RouteProps) => {
     )
 }
 
-export { PublicRoute, PrivateRoute }
+export { PrivateRoute, PublicRoute };

@@ -87,3 +87,62 @@ export type sidebarFriendsType = {
     }
   }
 }
+
+
+export type createNewGroupType = {
+  avatar: File | string,
+  name: string,
+  members: string[]
+}
+
+
+export interface Avatar {
+  url: string;
+}
+
+export interface Member {
+  avatar: Avatar;
+  _id: string;
+  name: string;
+  username: string;
+}
+
+export interface UserChatList {
+  _id: string;
+  name: string;
+  groupChat: boolean;
+  friendDetails?: Member[]
+  creator?: string;
+  members: Member[];
+  createdAt: string;
+  updatedAt: string;
+  __v: number;
+}
+
+
+
+
+
+
+export type chatDetailsType = {
+  _id: string;
+  name: string;
+  groupChat: boolean;
+  avatar?: {
+    public_id: string,
+    url: string
+  }
+  creator: string;
+  members: Member[];
+  createdAt: string; // or Date if you prefer to handle dates as Date objects
+  updatedAt: string; // or Date
+  __v: number;
+}
+// chatId, members, name, avatar
+
+export type updateGroupType = {
+  name: string,
+  member: string[],
+  chatId: string,
+  avatar: string
+}

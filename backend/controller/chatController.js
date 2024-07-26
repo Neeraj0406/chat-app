@@ -3,15 +3,24 @@ import { Chat } from "../models/chat.js"
 import { Message } from "../models/message.js"
 import { User } from "../models/userModel.js"
 import { showError, showResponse, showServerError } from "../utils/apiResponse.js"
-import { deleteFilesFromCloudinary, emitEvent } from "../utils/helper.js"
+import { deleteFilesFromCloudinary, emitEvent, uploadFilesToCloudinary } from "../utils/helper.js"
 
 const newGroupChat = async (req, res) => {
     try {
-        const { name, members, avatar } = req.body
+        const { name, members } = req.body
+        const file = req.file
 
-        if (members.length < 2) {
-            return showError(res, "Group chat must have atleast 3 members")
+        console.log("grup chat", name, members, file)
+
+        let avatar = {}
+        if (file) {
+            const result = await uploadFilesToCloudinary([file])
+            avatar = {
+                public_id: result[0].public_id,
+                url: result[0].url
+            }
         }
+
 
         const allMember = [...members, req.id]
         const newGroup = await Chat.create({
@@ -26,7 +35,7 @@ const newGroupChat = async (req, res) => {
         emitEvent(req, EmitEvents.ALERT, `Welcome to ${name} group`)
         emitEvent(req, EmitEvents.REFETCH_CHATS, members)
 
-        return showResponse(res, {}, "New group has been created successfully", 201)
+        return showResponse(res, newGroup, "New group has been created successfully", 201)
 
     } catch (error) {
         console.log(error)
@@ -40,9 +49,9 @@ const getMyChat = async (req, res) => {
         const chats = await Chat.find({ members: req.id }).populate(
             {
                 path: "members",
-                select: "name username avatar "
+                select: "name username avatar.url "
             }
-        )
+        ).sort({ updatedAt: -1 })
         return showResponse(res, chats, "All chats has fetched")
 
     } catch (error) {
@@ -254,7 +263,7 @@ const sendAttachments = async (req, res) => {
             sender: req.id,
             chat: chatId
         }
-        
+
         const message = await Message.create(messageForDB)
 
         emitEvent(req, EmitEvents.NEW_ATTACHMENT, chat.members, {
@@ -274,29 +283,17 @@ const sendAttachments = async (req, res) => {
 const getChatDetails = async (req, res) => {
     try {
         const { chatId } = req.params
+        let chat = await Chat.findById(chatId).populate({
+            path: "members",
+            select: "name  avatar username",
 
-        if (req.query.populate == "true") {
-            let chat = await Chat.findById(chatId).populate({
-                path: "members",
-                select: "name avatar"
-            })
+        })
 
-            if (!chat) {
-                return showError(res, "No chat found")
-            }
-            chat.members = chat.members.map((member) => ({ ...member, avatar: member.avatar.url }))
-
-            return showResponse(res, chat)
-        } else {
-            let chat = await Chat.findById(chatId)
-
-            if (!chat) {
-                return showError(res, "No chat found")
-            }
-
-            return showResponse(res, chat)
+        if (!chat) {
+            return showError(res, "No chat found")
         }
 
+        return showResponse(res, chat)
 
     } catch (error) {
         return showServerError(res)
@@ -400,6 +397,21 @@ const getChatMessage = async (req, res) => {
     }
 }
 
+const updateGroup = async (req, res) => {
+    const { chatId, members, name, avatar } = req.body
+    console.log(avatar)
+    console.log(req.file)
+
+    const chat = await Chat.findById(chatId)
+    chat.name = name
+    chat.members = members
+    // if (avatarChanged) {
+    //     uploadFilesToCloudinary([req.file])
+    //     // chat.members = members
+    // }
+
+}
 
 
-export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage }
+
+export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage, updateGroup }

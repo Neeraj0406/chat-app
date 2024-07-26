@@ -9,6 +9,7 @@ const chatSchema = new Schema({
         type: Boolean,
         default: false
     },
+
     creator: {
         type: Schema.Types.ObjectId,
         ref: "User"

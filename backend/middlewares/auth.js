@@ -11,7 +11,6 @@ const isAuthenticatedUser = async (req, res, next) => {
         }
 
         const decodedToken = verifyToken(token);
-
         if (!decodedToken._id) {
             return showError(res, "Invalid token", 401);
         }
@@ -20,7 +19,9 @@ const isAuthenticatedUser = async (req, res, next) => {
         next();
 
     } catch (error) {
-        console.log(error);
+        if (error.name === 'TokenExpiredError') {
+            return showError(res, "Token has expired", 401);
+        }
         return showServerError(res);
     }
 }

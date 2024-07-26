@@ -1,72 +1,86 @@
 import authServices from "@/app/services/authServices";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import { cookies } from "next/headers";
-import { useEffect } from "react";
+import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 
-
-export const fetchUserData = createAsyncThunk("userProfileData", async () => {
-  const res = await authServices.getProfile()
-  return res.data
-})
-
-interface userState {
-  token?: string
-  userInfo: {
-    username: string;
-    _id: string;
-    avatar: string;
-    name: string
-
-  }
+// Define the type for userInfo
+interface UserInfo {
+  username: string;
+  _id: string;
+  avatar: string;
+  name: string;
 }
 
-const initialState: userState = {
+interface userData {
+  username: string;
+  _id: string;
+  avatar: {
+    url: string
+  };
+  name: string;
+}
+
+// Define the type for the userState
+interface UserState {
+  token?: string;
+  userInfo: UserInfo;
+}
+
+// Initial state
+const initialState: UserState = {
   userInfo: {
     username: "",
     _id: "",
     avatar: "",
-    name: ""
+    name: "",
   },
-  token: ""
+  token: "",
 };
 
+// Fetch user data async thunk
+export const fetchUserData = createAsyncThunk<userData>("userProfileData", async () => {
+  const res = await authServices.getProfile();
+  console.log("API has been called");
+  return res.data.data; // Ensure res.data matches the UserInfo type
+});
 
-
-
+// User slice
 export const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setUserInfo: (state, action) => {
-      state.token = action.payload.data.token
-      state.userInfo.username = action.payload.data.username
-      state.userInfo.name = action.payload.data.name
-      state.userInfo._id = action.payload.data._id
-      state.userInfo.avatar = action.payload.data.avatar.url
+    setUserInfo: (state, action: PayloadAction<{ data: UserInfo & { token: string } }>) => {
+      const { data } = action.payload;
+      state.userInfo = {
+        username: data.username,
+        name: data.name,
+        _id: data._id,
+        avatar: data.avatar,
+      };
     },
-
-    setToken: (state, action) => {
-      state.token = action.payload
+    setToken: (state, action: PayloadAction<string>) => {
+      state.token = action.payload;
     },
-
     logoutUser: (state) => {
-      
-      state.token = ""
-      state.userInfo.username = ""
-      state.userInfo.name = ""
-      state.userInfo._id = ""
-      state.userInfo.avatar = ""
-
-    }
-
+      state.token = "";
+      state.userInfo = {
+        _id: "",
+        username: "",
+        name: "",
+        avatar: "",
+      };
+    },
   },
   extraReducers: (builder) => {
-    builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction) => {
-    })
-  }
+    builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction<userData>) => {
+      console.log("action.payload", action.payload)
+      state.userInfo._id = action.payload._id;
+      state.userInfo.username = action.payload.username;
+      state.userInfo.name = action.payload.name;
+      state.userInfo.avatar = action.payload.avatar.url
+    });
+  },
 });
 
+// Export actions and reducer
 export const { setUserInfo, logoutUser, setToken } = userSlice.actions;
-
 export default userSlice.reducer;

@@ -13,10 +13,11 @@ type PaginationInterface = {
 
 const Pagination = ({ payload, setPayload, totalDocumentCount }: PaginationInterface) => {
 
-    console.log("totalDocumentCount", totalDocumentCount, payload.pageSize, totalDocumentCount / payload.pageSize)
 
     const minPageSize = 1
-    const maxPageSize = totalDocumentCount > 0 ? Math.ceil(totalDocumentCount / payload.pageSize) : 1
+    const maxPageSize = useMemo(() => {
+        return totalDocumentCount > 0 ? Math.ceil(totalDocumentCount / payload.pageSize) : 1
+    }, [totalDocumentCount, payload])
 
 
 
