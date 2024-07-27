@@ -73,7 +73,6 @@ const login = async (req, res) => {
         delete usernameFound.password
         usernameFound.token = token
 
-        console.log("usernameFoundusernameFound", usernameFound)
         return res.status(200).json({
             data: usernameFound,
             message: "User logged in successfully"

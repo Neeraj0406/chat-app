@@ -17,11 +17,11 @@ const Chat = () => {
     const [loading, setLoading] = useState<boolean>(false)
     const [chatDetails, setChatDetails] = useState<chatDetailsType>()
     const { userInfo } = useSelector((state: RootState) => state.user)
+    const [refresh, setRefresh] = useState<boolean>(false)
 
     const fetchChatDetails = async (id: string) => {
         try {
             const res = await ChatServices.getChatDetails(id)
-            console.log("chat det", res)
             setChatDetails(res?.data?.data)
         } catch (error) {
             errorHandler(error)
@@ -34,29 +34,31 @@ const Chat = () => {
         if (chatId) {
             fetchChatDetails(chatId)
         }
-    }, [chatId])
+    }, [chatId, refresh])
 
-    console.log("chatDetails", chatDetails)
 
     if (loading) {
         return <div> Loading...</div>
     }
 
     return (
-        <div className='w-full h-chatCon  '>
+        <div className='flex-1 md:w-auto h-chatCon  '>
             {chatId ?
                 <>
-                    <ChatHeader chatDetails={chatDetails} groupAdmin={userInfo?._id == chatDetails?.creator} />
+                    <ChatHeader chatDetails={chatDetails} groupAdmin={userInfo?._id == chatDetails?.creator} setRefresh={setRefresh} refresh={refresh} />
                     <ChatMessage />
                     <ChatInput />
                 </>
                 : <div className='flex items-center justify-center h-full opacity-50 '>
-                    <Image
-                        src="/images/defaultChat.png"
-                        alt='default chat image'
-                        height={500}
-                        width={600}
-                    />
+                    <div className="w-[500px] h-[500px] relative">
+
+                        <Image
+                            src="/images/defaultChat.png"
+                            alt='default chat image'
+                            layout='fill'
+                            objectFit='cover'
+                        />
+                    </div>
                 </div>
             }
         </div>

@@ -11,8 +11,8 @@ const ChatServices = {
     createGroup: (values: FormData) => axiosInstance.post("chat/new-group", values),
     getAllChats: () => axiosInstance.get("chat/my-chats"),
     getChatDetails: (chatId: string) => axiosInstance.get(`chat/${chatId}`),
-    updateGroup: (values: FormData) => axiosInstance.post("edit-group", values)
-
+    updateGroup: (values: FormData) => axiosInstance.post("chat/edit-group", values),
+    leaveGroup: (id: string) => axiosInstance.get(`chat/leave-group/${id}`)
 
 }
 

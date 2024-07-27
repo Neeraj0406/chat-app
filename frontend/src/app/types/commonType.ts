@@ -112,6 +112,10 @@ export interface UserChatList {
   name: string;
   groupChat: boolean;
   friendDetails?: Member[]
+  avatar?: {
+    public_id: string,
+    url: string
+  }
   creator?: string;
   members: Member[];
   createdAt: string;

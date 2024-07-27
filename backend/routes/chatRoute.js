@@ -27,7 +27,7 @@ router.post("/message", upload.array("files", 5), sendAttachments)
 
 router.get("/message/:chatId", getChatMessage)
 
-router.post("/edit-group", updateGroup)
+router.post("/edit-group", upload.single("avatar"), updateGroup)
 
 router.route("/:chatId").get(getChatDetails).put(renameGroup).delete(deleteChatDetails)
 

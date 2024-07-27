@@ -26,4 +26,8 @@ const isAuthenticatedUser = async (req, res, next) => {
     }
 }
 
-export { isAuthenticatedUser };
+const socketAuthenticator = async (req, res, next) => {
+
+}
+
+export { isAuthenticatedUser, socketAuthenticator };

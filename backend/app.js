@@ -13,6 +13,7 @@ import { v4 as uuid } from "uuid"
 import { Message } from "./models/message.js"
 import cors from "cors"
 import { v2 as cloudinary } from "cloudinary"
+import { socketAuthenticator } from "./middlewares/auth.js"
 
 const PORT = process.env.PORT || 8000
 
@@ -25,9 +26,24 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_SECRET_KEY
 })
 
+
+
+const corsOptions = {
+    origin: "http://localhost:3000", // Replace with your frontend's URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+};
+
 const server = createServer(app)
-const io = new Server(server)
+const io = new Server(server, {
+    cors: corsOptions
+})
 const userSocketIds = new Map()
+
+io.use((socket, next) => {
+    cookieParser()(socket.request, socket.request.res, async (error) => {
+        await socketAuthenticator(error, socket, next)
+    })
+})
 
 io.on("connection", (socket) => {
     console.log("user is connected")
@@ -89,11 +105,6 @@ io.on("connection", (socket) => {
         console.log("User is disconnnected")
     })
 })
-
-const corsOptions = {
-    origin: "http://localhost:3000", // Replace with your frontend's URL
-    methods: ["GET", "POST", "PUT", "DELETE"],
-};
 
 app.use(cors(corsOptions));
 

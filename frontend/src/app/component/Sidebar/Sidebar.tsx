@@ -9,8 +9,11 @@ import { sidebarFriendsType, UserChatList } from '@/app/types/commonType'
 import Link from 'next/link'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/app/redux/store'
+import { useParams } from 'next/navigation'
 
-
+interface Params {
+    chatId?: string; // Define the expected route parameter
+}
 
 const Sidebar = () => {
 
@@ -19,12 +22,13 @@ const Sidebar = () => {
     const [allFriends, setAllFriends] = useState<UserChatList[]>([])
     const [filterFriends, setFilteredFriends] = useState<UserChatList[]>([])
     const [loading, setLoading] = useState(true)
+    const params = useParams(); // params might be null or undefined
+    const { chatId } = params as Params;
 
     const fetchAllChats = async () => {
         try {
             setLoading(true)
             const res = await ChatServices.getAllChats()
-            console.log("res", res.data.data)
 
             const modifiedData = res?.data?.data?.map((chat: UserChatList) => {
                 return { ...chat, friendDetails: chat?.members?.filter((member) => member._id != userInfo._id) }
@@ -56,14 +60,10 @@ const Sidebar = () => {
         }
     }, [inputValue])
 
-    console.log("filterFriends", filterFriends)
 
-    const showName = () => {
-
-    }
 
     return (
-        <div className=' w-1/4 h-chatCon border-r border'>
+        <div className={`w-1/4  h-chatCon border-r border `}>
             <div className='m-2'>
                 <div className="flex justify-end gap-1">
                     <FriendRequest />
@@ -77,7 +77,6 @@ const Sidebar = () => {
                     onChange={e => setInputValue(e.target.value)}
                 />
             </div>
-
             {loading && <p className='text-center mt-10'>List is loading...</p>}
             {!loading && filterFriends?.map((data, key) => (
                 <Link href={`/?chatId=${data?._id}`}>
@@ -86,7 +85,7 @@ const Sidebar = () => {
                         <>
                             <div className="w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
                                 <img
-                                    src={"/images/defaultGroupImage.jpg"}
+                                    src={data?.avatar?.url || "/images/defaultGroupImage.jpg"}
                                     alt="user-image"
                                     className="rounded-full h-[50px] w-[50px]"
 

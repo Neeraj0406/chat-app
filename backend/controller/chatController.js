@@ -208,7 +208,7 @@ const leaveGroup = async (req, res) => {
             return showError(res, "You are already not present in this group")
         }
 
-        chat.members = chat.member.filter((member) => member._id.toString() == req.id?.toString())
+        chat.members = chat?.members?.filter((member) => member._id.toString() != req.id?.toString())
 
         if (chat.creator.toString() == req.id.toString()) {
             chat.creator = chat.members[0]
@@ -218,9 +218,10 @@ const leaveGroup = async (req, res) => {
 
         emitEvent(req, EmitEvents.ALERT, `${leftUserDetails?.name} has left the group`)
 
-        return showResponse(res, "You successfully left the group")
+        return showResponse(res, {}, "You successfully left the group")
 
     } catch (error) {
+        console.log(error)
         return showServerError(res)
     }
 }
@@ -398,13 +399,47 @@ const getChatMessage = async (req, res) => {
 }
 
 const updateGroup = async (req, res) => {
-    const { chatId, members, name, avatar } = req.body
-    console.log(avatar)
-    console.log(req.file)
+    const { chatId, members, name, deletedPhotoPublicId } = req.body
+    console.log("req.body", req.body)
+    let newAvatar = {}
+    const chatDetails = await Chat.findById(chatId)
 
-    const chat = await Chat.findById(chatId)
-    chat.name = name
-    chat.members = members
+
+    if (!chatDetails) {
+        return showError(res, "Chat not found")
+    }
+    if (!chatDetails.groupChat) {
+        return showError(res, "Invalid operation")
+    }
+
+    if (chatDetails.creator != req.id?.toString()) {
+        return showError(res, "Unauthorized!!  Only admin can change the group name")
+    }
+    if (deletedPhotoPublicId) {
+        await deleteFilesFromCloudinary([deletedPhotoPublicId])
+        const newFiles = await uploadFilesToCloudinary([req.file])
+        newAvatar = {
+            public_id: newFiles[0].public_id,
+            url: newFiles[0].url
+        }
+    }
+
+
+    chatDetails.name = name
+    chatDetails.members = [...members, req.id]
+    if (deletedPhotoPublicId) {
+        chatDetails.avatar = newAvatar
+    }
+
+    console.log("chatDetails", chatDetails)
+    await chatDetails.save()
+
+    return showResponse(res, chatDetails, "Group updated successfully")
+    // const chat = await Chat.findById(chatId)
+    // chat.name = name
+    // chat.members = members
+
+
     // if (avatarChanged) {
     //     uploadFilesToCloudinary([req.file])
     //     // chat.members = members

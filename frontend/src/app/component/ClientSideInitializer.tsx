@@ -1,25 +1,40 @@
 "use client"
-import React, { useEffect } from 'react'
-import { useDispatch } from 'react-redux';
-import { fetchUserData, setToken } from '../redux/feature/user';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import io from "socket.io-client";
+import { serverUrl } from '../axios/axiosInstance';
+import { fetchUserData, setSocket, setToken } from '../redux/feature/user';
 import { AppDispatch, RootState } from '../redux/store';
-import { useSelector } from 'react-redux';
+
 
 const ClientSideInitializer = () => {
     const dispatch = useDispatch<AppDispatch>();
-    const { userInfo } = useSelector((state: RootState) => state.user)
+    const { userInfo, token } = useSelector((state: RootState) => state.user)
 
-    console.log("userInfo", userInfo)
 
     useEffect(() => {
         const token = localStorage.getItem("chat-token");
         if (token) {
             // Example payload, adjust as needed
             dispatch(setToken(token));
-            console.log("aasdfasdfl")
             dispatch(fetchUserData())
         }
     }, [dispatch]);
+
+    const connectSocket = () => {
+        const socket = io(serverUrl, { auth: { token: token } })
+        console.log("socket", socket, socket.id)
+        dispatch(setSocket(socket?.id || ""))
+    }
+
+
+    useEffect(() => {
+        if (userInfo?._id && token) {
+            connectSocket()
+            // dispatch(setSocket(socket.id))
+        }
+    }, [token, userInfo._id])
+
 
     return null
 }

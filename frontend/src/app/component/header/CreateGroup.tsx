@@ -19,24 +19,22 @@ interface OptionType {
 
 const animatedComponents = makeAnimated();
 
-const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create", chatDetails: chatDetailsType | undefined }) => {
+const CreateGroup = ({ pageName, chatDetails, setRefresh, refresh }: { pageName: "manage" | "create", chatDetails: chatDetailsType | undefined, refresh?: boolean, setRefresh?: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const [open, setOpen] = useState<boolean>(false);
     const [allFriends, setAllFriends] = useState<OptionType[]>([]);
-    const [loading, setLoading] = useState<boolean>(true);
+    const [loading, setLoading] = useState<boolean>(false);
     const [imagePreview, setImagePreview] = useState<string | null>("");
 
     const imageRef = useRef<HTMLInputElement>(null);
 
     const getAllFriends = async () => {
         try {
-            setLoading(true);
+
             const res = await ChatServices.getMyFriends();
             let temp = res?.data?.data?.map((data: any) => ({ label: data?.friend?.name, value: data?.friend?._id }));
             setAllFriends(temp);
         } catch (error) {
             errorHandler(error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -87,7 +85,7 @@ const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create",
             formik.setValues({
                 name: chatDetails.name || '',
                 members: mappedMembers,
-                avatar: '', // or set a default avatar if available
+                avatar: chatDetails?.avatar?.url || "",
             });
             setImagePreview(chatDetails.avatar?.url || ""); // Set image preview if needed
         }
@@ -103,6 +101,7 @@ const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create",
 
     const createNewGroup = async (values: createNewGroupType, setSubmitting: (isSubmitting: boolean) => void) => {
         try {
+            setLoading(true)
             const formData = new FormData();
             formData.append("avatar", values.avatar as any);
             formData.append("name", values.name);
@@ -113,35 +112,51 @@ const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create",
             const res = await ChatServices.createGroup(formData);
             toast.success(res.data.message);
             setOpen(false);
-            console.log("group created", res);
         } catch (error) {
             errorHandler(error);
         } finally {
             setOpen(false);
-            setSubmitting(false);
+            setLoading(false);
             setImagePreview("");
         }
     }
 
     const updateGroup = async (values: createNewGroupType, setSubmitting: (isSubmitting: boolean) => void) => {
         try {
+            setLoading(true)
             const formData = new FormData();
-            formData.append("avatar", values.avatar as any);
+
             formData.append("name", values.name);
+            formData.append("chatId", chatDetails?._id || "");
             values.members?.forEach((member) => {
                 formData.append("members[]", member);
             });
+            if (chatDetails?.avatar?.public_id && chatDetails?.avatar?.url != formik.values.avatar) {
+                formData.append("deletedPhotoPublicId", chatDetails?.avatar?.public_id)
+                formData.append("avatar", values.avatar);
+            }
             const res = await ChatServices.updateGroup(formData)
-            console.log("res", res)
+            toast.success(res?.data?.message)
+            if ((refresh == true || refresh == false) && setRefresh) {
+                setRefresh(!refresh)
+            }
+            setOpen(false);
         } catch (error) {
             errorHandler(error)
         }
         finally {
             setOpen(false);
-            setSubmitting(false);
+            setLoading(false);
             setImagePreview("");
         }
     }
+
+    const handleClose = () => {
+        setOpen(false)
+        setImagePreview("");
+        formik.resetForm()
+    }
+
 
     return (
         <div>
@@ -201,29 +216,25 @@ const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create",
                                         <label htmlFor="group_members" className="font-bold">
                                             Members
                                         </label>
-                                        {loading ? (
-                                            <p>Loading...</p>
-                                        ) : (
-                                            <Select
-                                                value={formik.values.members}
-                                                onChange={(selectedOptions) => {
-                                                    formik.setFieldValue('members', selectedOptions);
-                                                }}
-                                                components={animatedComponents}
-                                                options={allFriends}
-                                                isMulti
-                                            />
-                                        )}
-                                        {/* {formik.touched.members && formik.errors.members ? (
-                                        <div className='error'>{formik.errors.members}</div>
-                                    ) : null} */}
+                                        <Select
+                                            value={formik.values.members}
+                                            onChange={(selectedOptions) => {
+                                                formik.setFieldValue('members', selectedOptions);
+                                            }}
+                                            components={animatedComponents}
+                                            options={allFriends}
+                                            isMulti
+                                            closeMenuOnSelect={false}
+                                        />
+
                                         <ErrorMessage name='members' component={"div"} className='error' />
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap items-center justify-end p-4 shrink-0 text-blue-gray-500">
                                     <button
                                         type="button"
-                                        onClick={() => setOpen(false)}
+                                        onClick={handleClose}
+                                        disabled={loading}
                                         className="px-6 py-3 mr-1 font-sans text-xs font-bold text-red-500 uppercase transition-all rounded-lg middle none center hover:bg-red-500/10 active:bg-red-500/30 disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
                                     >
                                         Cancel
@@ -231,8 +242,11 @@ const CreateGroup = ({ pageName, chatDetails }: { pageName: "manage" | "create",
                                     <button
                                         type="submit"
                                         className="middle none center rounded-lg bg-gradient-to-tr from-green-600 to-green-400 py-3 px-6 font-sans text-xs font-bold uppercase text-white shadow-md shadow-green-500/20 transition-all hover:shadow-lg hover:shadow-green-500/40 active:opacity-[0.85] disabled:pointer-events-none disabled:opacity-50 disabled:shadow-none"
+                                        disabled={loading}
                                     >
-                                        {pageName === "manage" ? "Update" : "Create"}
+                                        {pageName === "manage" ?
+                                            loading ? "Updating" : "Update"
+                                            : loading ? "Creating" : "Create"}
                                     </button>
                                 </div>
                             </form>

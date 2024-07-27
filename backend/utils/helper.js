@@ -58,26 +58,6 @@ export const emitEvent = (req, event, users, data) => {
 
 }
 
-export const deleteFilesFromCloudinary = async (publicIds) => {
-    const deletePromises = publicIds.map((publicId) => {
-        return new Promise((resolve, reject) => {
-            cloudinary.uploader.destroy(publicId, (error, result) => {
-                if (error) {
-                    return reject(error);
-                }
-                resolve(result);
-            });
-        });
-    });
-
-    try {
-        const result = await Promise.all(deletePromises)
-        return result
-    } catch (error) {
-        console.log("Error while deleting image from cloudinary")
-        return error
-    }
-}
 
 
 export const getFriendOtherThanMe = () => {
@@ -127,4 +107,27 @@ export const uploadFilesToCloudinary = async (files = []) => {
         console.log(error)
     }
 }
+
+
+export const deleteFilesFromCloudinary = async (publicIds) => {
+    const deletePromises = publicIds.map((publicId) => {
+        return new Promise((resolve, reject) => {
+            cloudinary.uploader.destroy(publicId, (error, result) => {
+                if (error) {
+                    return reject(error);
+                }
+                resolve(result);
+            });
+        });
+    });
+
+    try {
+        const result = await Promise.all(deletePromises)
+        return result
+    } catch (error) {
+        console.log("Error while deleting image from cloudinary")
+        return error
+    }
+}
+
 

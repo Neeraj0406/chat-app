@@ -2,6 +2,7 @@
 import axios, { AxiosInstance } from "axios";
 
 export const baseUrl: string = "http://localhost:8000/api/v1/";
+export const serverUrl: string = "http://localhost:8000/"
 
 const axiosInstance: AxiosInstance = axios.create({
     baseURL: baseUrl,

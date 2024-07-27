@@ -17,12 +17,14 @@ interface userData {
     url: string
   };
   name: string;
+  socket: ""
 }
 
 // Define the type for the userState
 interface UserState {
   token?: string;
   userInfo: UserInfo;
+  socket?: string;
 }
 
 // Initial state
@@ -34,12 +36,12 @@ const initialState: UserState = {
     name: "",
   },
   token: "",
+  socket: "",
 };
 
 // Fetch user data async thunk
 export const fetchUserData = createAsyncThunk<userData>("userProfileData", async () => {
   const res = await authServices.getProfile();
-  console.log("API has been called");
   return res.data.data; // Ensure res.data matches the UserInfo type
 });
 
@@ -60,6 +62,9 @@ export const userSlice = createSlice({
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
     },
+    setSocket: (state, action: PayloadAction<string>) => {
+      state.socket = action.payload;
+    },
     logoutUser: (state) => {
       state.token = "";
       state.userInfo = {
@@ -72,7 +77,6 @@ export const userSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder.addCase(fetchUserData.fulfilled, (state, action: PayloadAction<userData>) => {
-      console.log("action.payload", action.payload)
       state.userInfo._id = action.payload._id;
       state.userInfo.username = action.payload.username;
       state.userInfo.name = action.payload.name;
@@ -82,5 +86,5 @@ export const userSlice = createSlice({
 });
 
 // Export actions and reducer
-export const { setUserInfo, logoutUser, setToken } = userSlice.actions;
+export const { setUserInfo, logoutUser, setToken, setSocket } = userSlice.actions;
 export default userSlice.reducer;
