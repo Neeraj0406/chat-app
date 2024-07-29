@@ -1,6 +1,7 @@
 import authServices from "@/app/services/authServices";
 import type { PayloadAction } from "@reduxjs/toolkit";
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { Socket } from "socket.io-client";
 
 // Define the type for userInfo
 interface UserInfo {
@@ -17,14 +18,14 @@ interface userData {
     url: string
   };
   name: string;
-  socket: ""
+  // socket: ""
 }
 
 // Define the type for the userState
 interface UserState {
   token?: string;
   userInfo: UserInfo;
-  socket?: string;
+  socket: any,
 }
 
 // Initial state
@@ -36,7 +37,7 @@ const initialState: UserState = {
     name: "",
   },
   token: "",
-  socket: "",
+  socket: null,
 };
 
 // Fetch user data async thunk
@@ -62,7 +63,8 @@ export const userSlice = createSlice({
     setToken: (state, action: PayloadAction<string>) => {
       state.token = action.payload;
     },
-    setSocket: (state, action: PayloadAction<string>) => {
+    setSocket: (state, action: PayloadAction<Socket | null>) => {
+      console.log("action.payload", action.payload)
       state.socket = action.payload;
     },
     logoutUser: (state) => {

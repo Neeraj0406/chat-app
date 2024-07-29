@@ -13,7 +13,7 @@ import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
 
 const ChatHeader = ({ chatDetails, groupAdmin, setRefresh, refresh }: {
-    chatDetails: chatDetailsType | undefined, groupAdmin: boolean, refresh: boolean, setRefresh: React.Dispatch<React.SetStateAction<boolean>>
+    chatDetails: chatDetailsType | null | undefined, groupAdmin: boolean, refresh: boolean, setRefresh: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
     const { userInfo } = useSelector((state: RootState) => state.user)
     const [friendDetails, setFriendDetails] = useState<Member>()

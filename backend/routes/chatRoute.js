@@ -1,6 +1,6 @@
 import express from "express";
 import { isAuthenticatedUser } from "../middlewares/auth.js";
-import { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage, updateGroup } from "../controller/chatController.js";
+import { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage, updateGroup, getAllMessages } from "../controller/chatController.js";
 import { upload } from "../middlewares/multer.js";
 const router = express.Router()
 
@@ -29,7 +29,10 @@ router.get("/message/:chatId", getChatMessage)
 
 router.post("/edit-group", upload.single("avatar"), updateGroup)
 
+router.get("/allMessages/:chatId", getAllMessages)
+
 router.route("/:chatId").get(getChatDetails).put(renameGroup).delete(deleteChatDetails)
+
 
 
 

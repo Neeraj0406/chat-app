@@ -60,8 +60,9 @@ export const emitEvent = (req, event, users, data) => {
 
 
 
-export const getFriendOtherThanMe = () => {
-
+export const getUserExceptMe = (members, me) => {
+    const user = members.filter((member) => member != me)
+    return user
 }
 
 

@@ -1,5 +1,6 @@
 "use client"
 import axios, { AxiosInstance } from "axios";
+import { toast } from "react-toastify";
 
 export const baseUrl: string = "http://localhost:8000/api/v1/";
 export const serverUrl: string = "http://localhost:8000/"
@@ -20,5 +21,20 @@ axiosInstance.interceptors.request.use(
         return Promise.reject(error);
     }
 );
+
+
+axiosInstance.interceptors.response.use(
+    (response) => response,
+    (error) => {
+        if (error.response && error.response.status === 401) {
+            localStorage.removeItem('chat-token');
+            window.location.href = '/login';
+            return Promise.reject(error);
+        }
+
+        return Promise.reject(error);
+    }
+);
+
 
 export default axiosInstance;

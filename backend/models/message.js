@@ -7,7 +7,7 @@ const messageSchema = new Schema({
         ref: "User",
         required: true
     },
-    chat: {
+    chatId: {
         type: Types.ObjectId,
         ref: "Chat",
         required: true

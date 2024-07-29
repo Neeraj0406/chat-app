@@ -448,5 +448,27 @@ const updateGroup = async (req, res) => {
 }
 
 
+const getAllMessages = async (req, res) => {
+    try {
+        const { chatId } = req.params
+        const chat = await Chat.findById(chatId)
 
-export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage, updateGroup }
+        if (!chat) {
+            return showError(res, "Invalid Chat id")
+        }
+        const memberFound = chat.members.find((member) => member?.toString() == req?.id?.toString())
+        console.log("memberFound", memberFound, chat.members, req?.id)
+        if (!memberFound) {
+            return showError(res, "Invalid chat id")
+        }
+
+        const messages = await Message.find({ chatId })
+        return showResponse(res, messages)
+
+    } catch (error) {
+        showServerError()
+    }
+}
+
+
+export { newGroupChat, getMyChat, getMyGroups, addMembers, removeMembers, leaveGroup, sendAttachments, getChatDetails, renameGroup, deleteChatDetails, getChatMessage, updateGroup, getAllMessages }

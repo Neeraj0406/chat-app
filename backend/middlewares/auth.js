@@ -1,6 +1,7 @@
 import { showError, showServerError } from "../utils/apiResponse.js";
 import constant from "../constants/contant.js";
 import { verifyToken } from "../utils/helper.js";
+import { User } from "../models/userModel.js";
 
 const isAuthenticatedUser = async (req, res, next) => {
     try {
@@ -26,8 +27,28 @@ const isAuthenticatedUser = async (req, res, next) => {
     }
 }
 
-const socketAuthenticator = async (req, res, next) => {
+const socketAuthenticator = async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token
 
+        if (!token) {
+            return next(new Error("Authentication error"))
+        }
+
+        const decodedToken = verifyToken(token)
+        if (decodedToken?._id) {
+            const user = await User.findById(decodedToken?._id)
+            socket.user = user
+            next()
+
+        } else {
+            console.log("Error while verify token for socket")
+            next(new Error("Token expired"))
+        }
+    } catch (error) {
+        console.log("Error while verify token for socket")
+        next(new Error('Authentication error'));
+    }
 }
 
 export { isAuthenticatedUser, socketAuthenticator };

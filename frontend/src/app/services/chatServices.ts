@@ -12,7 +12,10 @@ const ChatServices = {
     getAllChats: () => axiosInstance.get("chat/my-chats"),
     getChatDetails: (chatId: string) => axiosInstance.get(`chat/${chatId}`),
     updateGroup: (values: FormData) => axiosInstance.post("chat/edit-group", values),
-    leaveGroup: (id: string) => axiosInstance.get(`chat/leave-group/${id}`)
+    leaveGroup: (id: string) => axiosInstance.get(`chat/leave-group/${id}`),
+
+
+    allMessages: (chatId: string) => axiosInstance.get(`chat/allMessages/${chatId}`)
 
 }
 

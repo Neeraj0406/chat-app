@@ -19,7 +19,7 @@ interface OptionType {
 
 const animatedComponents = makeAnimated();
 
-const CreateGroup = ({ pageName, chatDetails, setRefresh, refresh }: { pageName: "manage" | "create", chatDetails: chatDetailsType | undefined, refresh?: boolean, setRefresh?: React.Dispatch<React.SetStateAction<boolean>> }) => {
+const CreateGroup = ({ pageName, chatDetails, setRefresh, refresh }: { pageName: "manage" | "create", chatDetails: chatDetailsType | undefined | null, refresh?: boolean, setRefresh?: React.Dispatch<React.SetStateAction<boolean>> }) => {
     const [open, setOpen] = useState<boolean>(false);
     const [allFriends, setAllFriends] = useState<OptionType[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
