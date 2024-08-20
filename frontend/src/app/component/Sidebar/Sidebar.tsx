@@ -9,7 +9,8 @@ import { sidebarFriendsType, UserChatList } from '@/app/types/commonType'
 import Link from 'next/link'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/app/redux/store'
-import { useParams } from 'next/navigation'
+import { useParams, useSearchParams } from 'next/navigation'
+import EmitEvents from '@/app/utils/constant'
 
 interface Params {
     chatId?: string; // Define the expected route parameter
@@ -17,17 +18,17 @@ interface Params {
 
 const Sidebar = () => {
 
-    const { userInfo } = useSelector((state: RootState) => state.user)
+    const { userInfo, socket } = useSelector((state: RootState) => state.user)
     const [inputValue, setInputValue] = useState("")
     const [allFriends, setAllFriends] = useState<UserChatList[]>([])
     const [filterFriends, setFilteredFriends] = useState<UserChatList[]>([])
     const [loading, setLoading] = useState(true)
-    const params = useParams(); // params might be null or undefined
-    const { chatId } = params as Params;
+    const searchParams = useSearchParams()
+    const chatId = searchParams?.get("chatId")
 
     const fetchAllChats = async () => {
         try {
-            setLoading(true)
+
             const res = await ChatServices.getAllChats()
 
             const modifiedData = res?.data?.data?.map((chat: UserChatList) => {
@@ -43,8 +44,26 @@ const Sidebar = () => {
     }
 
     useEffect(() => {
-        fetchAllChats()
-    }, [])
+        if (userInfo?._id) {
+            setLoading(true)
+            fetchAllChats()
+        }
+    }, [userInfo])
+
+    useEffect(() => {
+
+        const refetchChatHandler = () => {
+            fetchAllChats()
+        }
+
+        if (socket) {
+            socket.on(EmitEvents.REFETCH_CHATS, refetchChatHandler)
+        }
+
+        return () => socket && socket.off(EmitEvents.REFETCH_CHATS, refetchChatHandler)
+
+
+    }, [socket])
 
 
     useEffect(() => {
@@ -83,7 +102,7 @@ const Sidebar = () => {
                     {data?.groupChat
                         ?
                         <>
-                            <div className="w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
+                            <div className={`w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 ${chatId == data?._id && "bg-gray-200"} hover:bg-gray-200 cursor-pointer  `}>
                                 <img
                                     src={data?.avatar?.url || "/images/defaultGroupImage.jpg"}
                                     alt="user-image"
@@ -93,14 +112,14 @@ const Sidebar = () => {
 
                                 <div className="w-48">
                                     <h3 className='font-semibold'>{data?.name}</h3>
-
+                                    <p className='text-xs text-gray-700 truncate w-[100px]'>{data?.lastMessage}</p>
                                 </div>
 
                             </div>
                         </>
                         :
                         <>
-                            <div className="w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 hover:bg-gray-200 cursor-pointer  ">
+                            <div className={`w-100  flex items-center gap-4 p-3 border-gray-100 border-b border-1 ${chatId == data?._id && "bg-gray-200"} hover:bg-gray-200 cursor-pointer  `}>
                                 <img
                                     src={data?.friendDetails?.[0]?.avatar?.url || ""}
                                     alt="user-image"
@@ -109,7 +128,7 @@ const Sidebar = () => {
                                 />
                                 <div className="w-48">
                                     <h3 className='font-semibold'>{data?.friendDetails?.[0]?.name}</h3>
-
+                                    <p className='text-xs text-gray-700 truncate w-[100px]'>{data?.lastMessage}</p>
                                 </div>
 
                             </div>

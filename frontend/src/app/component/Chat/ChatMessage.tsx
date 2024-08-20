@@ -1,32 +1,30 @@
 "use client"
 import { RootState } from '@/app/redux/store'
-import Image from 'next/image'
-import React, { useEffect, useRef } from 'react'
+import { MessageType } from '@/app/types/commonType'
+import { scrollChatToBottom } from '@/app/utils/commonFunction'
+import React, { RefObject, useEffect, useRef } from 'react'
 import { useSelector } from 'react-redux'
 
-interface ChatMessageProps {
-    messages: any
+type ChatMessageProps = {
+    messages: MessageType[];
+    bottomRef : RefObject<HTMLDivElement>
+};
+
+type messageProp = {
+    message: MessageType
 }
 
-interface Message {
-
-}
-
-const ChatMessage = ({ messages }: ChatMessageProps) => {
-    const bottomRef = useRef<HTMLDivElement>(null);
+const ChatMessage: React.FC<ChatMessageProps> = ({ messages ,bottomRef}) => {
+    // const bottomRef = useRef<HTMLDivElement>(null);
     const { userInfo } = useSelector((state: RootState) => state.user)
 
-    const scrollChatToBottom = () => {
-        if (bottomRef.current) {
-            bottomRef.current?.scrollIntoView({ behavior: 'smooth', inline: "end" });
-        }
-    }
+ 
 
     useEffect(() => {
-        scrollChatToBottom()
+        scrollChatToBottom(bottomRef)
+        
     }, [])
 
-    console.log("userInfo", userInfo?._id,)
 
     return (
         <div className='h-chatHeight overflow-y-auto p-5 flex flex-col w-full'>
@@ -43,9 +41,8 @@ const ChatMessage = ({ messages }: ChatMessageProps) => {
 
 
 
-const SenderMessage = ({ message }: any) => {
+const SenderMessage: React.FC<messageProp> = ({ message }) => {
 
-    console.log("condition did not matched", message?.sender?._id)
     return (
         <>
             <div className=' max-w-[400px]  mb-6 '>
@@ -65,7 +62,7 @@ const SenderMessage = ({ message }: any) => {
     )
 }
 
-const YourMessages = ({ message }: any) => {
+const YourMessages: React.FC<messageProp> = ({ message }) => {
     return (
         <>
             <div className="flex items-start justify-end gap-2 mr-10  mb-6">

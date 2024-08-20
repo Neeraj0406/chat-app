@@ -9,3 +9,9 @@ export const errorHandler = (error: any) => {
 }
 
 
+
+export const scrollChatToBottom = (ref: any) => {
+    if (ref?.current) {
+        ref?.current?.scrollIntoView({ behavior: 'smooth', inline: "end" });
+    }
+}

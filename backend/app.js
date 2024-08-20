@@ -12,7 +12,7 @@ import { Message } from "./models/message.js"
 import chatRoutes from "./routes/chatRoute.js"
 import userRoutes from "./routes/userRoutes.js"
 import { connectDB } from "./utils/connectDb.js"
-import { getUserExceptMe } from "./utils/helper.js"
+import { getMemberSocketId, getUserExceptMe } from "./utils/helper.js"
 const app = express()
 
 const PORT = process.env.PORT || 8000
@@ -44,15 +44,19 @@ io.use(async (socket, next) => {
 })
 
 io.on("connection", (socket) => {
-    console.log("user is connected")
+    console.log("User Connected to socket")
 
     const user = socket.user
+    const userId = user.id.toString()
+    if (userSocketIds.has(userId)) {
+        userSocketIds.get(userId).push(socket.id)
+    } else {
+        userSocketIds.set(userId, [socket.id])
+    }
 
-    userSocketIds.set(user._id.toString(), socket.id)
-
+    console.log("userSocketIds", userSocketIds)
 
     socket.on(EmitEvents.NEW_MESSAGE, async ({ chatId, message }) => {
-        console.log("new message received", message)
         const messageForDb = {
             content: message,
             chatId,
@@ -61,68 +65,54 @@ io.on("connection", (socket) => {
 
         const newMessage = await Message.create(messageForDb)
 
+
         const messageForRealTime = {
             content: message,
             _id: newMessage?._id,
             sender: {
                 _id: user._id,
                 name: user.name,
+                avatar: user.avatar
             },
             chatId,
-            createdAt: message?.createdAt,
+            createdAt: newMessage?.createdAt,
         };
-
         const chat = await Chat.findById(chatId)
         const members = getUserExceptMe(chat.members, user?._id)
-        console.log(members)
-        io.to(members).emit(EmitEvents.NEW_MESSAGE, messageForRealTime)
+        const membersSocket = getMemberSocketId(userSocketIds, members)
+        const mineSocketIds = userSocketIds.get(userId)
+        console.log("mineSocketIds",mineSocketIds)
+        membersSocket?.forEach((socketId) => {
+            io.to(socketId).emit(EmitEvents.NEW_MESSAGE, messageForRealTime)
+        })
 
+
+        // add last message to chat model
+        chat.lastMessage = message
+        console.log("update chat", chat)
+        await chat.save()
+
+
+        // refetch chat list 
+        membersSocket?.forEach((socketId) => {
+            io.to(socketId).emit(EmitEvents.REFETCH_CHATS, { chatId })
+        })
+        io.to(mineSocketIds).emit(EmitEvents.REFETCH_CHATS, { chatId })
 
     })
 
-    // socket.on(EmitEvents.NEW_MESSAGE, async ({ chatId, members, messages }) => {
-
-
-
-    //     const messageForRealTime = {
-    //         _id: uuid(),
-    //         chatId,
-    //         content: messages,
-    //         sender: {
-    //             _id: user._id,
-    //             name: user.name,
-    //             avatar: user.avatar.url
-    //         },
-    //         createdAt: new Date().toISOString()
-    //     }
-
-
-    //     const messageForDB = {
-    //         content: messages,
-    //         sender: user._id,
-    //         chat: chatId
-    //     }
-    //     const memberSocket = getSockets(members, userSocketIds)
-
-    //     io.to(memberSocket).emit(EmitEvents.NEW_MESSAGE, {
-    //         chatId,
-    //         message: messageForRealTime
-    //     })
-    //     io.to(memberSocket).emit(EmitEvents.NEW_MESSAGE_ALERT, { chatId })
-
-    //     try {
-    //         await Message.create(messageForDB)
-    //     } catch (error) {
-    //         console.log(error)
-    //     }
-
-
-    //     console.log(messageForRealTime)
-    // })
 
     socket.on("disconnect", () => {
-        userSocketIds.delete(user._id.toString())
         console.log("User is disconnnected")
+
+        const userSocket = userSocketIds.get(userId)
+        const filteredSocket = userSocket?.filter((socketId) => socketId != socket.id)
+        if (filteredSocket.length > 0) {
+            userSocketIds.set(userId, filteredSocket)
+        } else {
+            userSocketIds.delete(userId)
+        }
+        console.log("usersocket", userSocketIds)
     })
 })
 

@@ -24,7 +24,6 @@ const ClientSideInitializer = () => {
         let socketConnection: Socket | undefined;
 
         const connectSocket = async () => {
-            console.log("calling", userInfo?._id, token)
             socketConnection = io(serverUrl,
                 {
                     auth: { token },
@@ -32,7 +31,6 @@ const ClientSideInitializer = () => {
                 }
             );
             socketConnection.on("connect", () => {
-                console.log("socket", socketConnection)
                 if (socketConnection) {
                     dispatch(setSocket(socketConnection));
                 }
@@ -55,7 +53,6 @@ const ClientSideInitializer = () => {
     }, [token, userInfo._id]);
 
 
-    console.log("socket details", socket)
 
     return null
 }

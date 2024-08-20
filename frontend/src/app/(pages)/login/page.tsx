@@ -27,11 +27,11 @@ const Login: React.FC = () => {
             setTimeout(() => {
                 router.push("/");
             }, 1000);
-            toast.success(res.data.message)
             localStorage.setItem("chat-token", res.data.data.token)
             dispatch(setUserInfo(res.data))
             dispatch(setToken(res.data.data.token))
-
+            toast.success(res.data.message)
+            
         } catch (error) {
             errorHandler(error)
         } finally {

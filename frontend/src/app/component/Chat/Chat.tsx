@@ -1,13 +1,13 @@
 "use client"
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import ChatHeader from './ChatHeader'
 import ChatMessage from './ChatMessage'
 import ChatInput from './ChatInput'
 import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
-import { errorHandler } from '@/app/utils/commonFunction'
+import { errorHandler, scrollChatToBottom } from '@/app/utils/commonFunction'
 import ChatServices from '@/app/services/chatServices'
-import { chatDetailsType } from '@/app/types/commonType'
+import { chatDetailsType, MessageType } from '@/app/types/commonType'
 import { useSelector } from 'react-redux'
 import { RootState } from '@/app/redux/store'
 import EmitEvents from '@/app/utils/constant'
@@ -19,7 +19,8 @@ const Chat = () => {
     const [chatDetails, setChatDetails] = useState<chatDetailsType | null>()
     const { userInfo, socket } = useSelector((state: RootState) => state.user)
     const [refresh, setRefresh] = useState<boolean>(false)
-    const [messages, setMessages] = useState<any>([])      /////////////////////correct this
+    const [messages, setMessages] = useState<MessageType[]>([])
+    const bottomRef = useRef<HTMLDivElement>(null);
 
     const fetchChatDetails = async (id: string) => {
         try {
@@ -35,7 +36,10 @@ const Chat = () => {
     const fetchAllMessages = async (id: string) => {
         try {
             const res = await ChatServices.allMessages(id)
-            setMessages(res?.data?.data)
+            setMessages(res?.data?.data || [])
+            setTimeout(() => {
+                scrollChatToBottom(bottomRef)
+            }, 1000);
         } catch (error) {
             errorHandler(error)
         } finally {
@@ -43,29 +47,34 @@ const Chat = () => {
         }
     }
 
+
+
     useEffect(() => {
         if (chatId) {
-            setMessages([])
-            setChatDetails(null)
             fetchChatDetails(chatId)
             fetchAllMessages(chatId)
         }
+
+        return () => {
+            setMessages([])
+            setChatDetails(null)
+        }
     }, [chatId, refresh])
 
-    console.log("messages", messages)
+
     if (loading) {
         return <div> Loading...</div>
     }
 
     useEffect(() => {
-        const newMessageListner = (data: any) => {
-            console.log("message received", data)
+        const newMessageHandler = (data: any) => {
+            setMessages((prev) => [...prev, data])
         }
         if (socket) {
-            socket.on(EmitEvents.NEW_MESSAGE, newMessageListner)
+            socket.on(EmitEvents.NEW_MESSAGE, newMessageHandler)
         }
 
-        return () => socket && socket.off(EmitEvents.NEW_MESSAGE, newMessageListner)
+        return () => socket && socket.off(EmitEvents.NEW_MESSAGE, newMessageHandler)
 
 
     }, [socket])
@@ -76,8 +85,8 @@ const Chat = () => {
             {chatId ?
                 <>
                     <ChatHeader chatDetails={chatDetails} groupAdmin={userInfo?._id == chatDetails?.creator} setRefresh={setRefresh} refresh={refresh} />
-                    <ChatMessage messages={messages} />
-                    <ChatInput chatId={chatId} />
+                    <ChatMessage messages={messages} bottomRef={bottomRef} />
+                    <ChatInput chatId={chatId} bottomRef={bottomRef} setMessages={setMessages}/>
                 </>
                 : <div className='flex items-center justify-center h-full opacity-50 '>
                     <div className="w-[500px] h-[500px] relative">

@@ -64,7 +64,6 @@ export const userSlice = createSlice({
       state.token = action.payload;
     },
     setSocket: (state, action: PayloadAction<Socket | null>) => {
-      console.log("action.payload", action.payload)
       state.socket = action.payload;
     },
     logoutUser: (state) => {

@@ -117,6 +117,7 @@ export interface UserChatList {
     url: string
   }
   creator?: string;
+  lastMessage?: string;
   members: Member[];
   createdAt: string;
   updatedAt: string;
@@ -149,4 +150,25 @@ export type updateGroupType = {
   member: string[],
   chatId: string,
   avatar: string
+}
+
+
+export type userInfo = {
+  avatar: {
+    public_id: string,
+    url: string,
+  },
+  _id: string,
+  name: string,
+}
+
+
+export type MessageType = {
+  _id: string,
+  sender: userInfo,
+  chatId: string,
+  content: string,
+  attachments?: string[],
+  createdAt: string,
+  updatedAt: string,
 }

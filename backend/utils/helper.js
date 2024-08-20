@@ -61,8 +61,9 @@ export const emitEvent = (req, event, users, data) => {
 
 
 export const getUserExceptMe = (members, me) => {
-    const user = members.filter((member) => member != me)
-    return user
+    const user = members.filter((member) => member?.toString() != me)
+
+    return user?.map((u) => u?.toString())
 }
 
 
@@ -131,4 +132,10 @@ export const deleteFilesFromCloudinary = async (publicIds) => {
     }
 }
 
+
+export const getMemberSocketId = (userSocketIds, members) => {
+    const memberSocket = members?.map((member) => userSocketIds.get(member))
+    return memberSocket
+
+}
 

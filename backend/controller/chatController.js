@@ -462,7 +462,10 @@ const getAllMessages = async (req, res) => {
             return showError(res, "Invalid chat id")
         }
 
-        const messages = await Message.find({ chatId }).populate("sender")
+        const messages = await Message.find({ chatId }).populate({
+            path: "sender",
+            select: "avatar name"
+        })
 
         return showResponse(res, messages)
 

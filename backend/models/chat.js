@@ -20,6 +20,7 @@ const chatSchema = new Schema({
             ref: "User"
         }
     ],
+    lastMessage: String,
     avatar: {
         public_id: String,
         url: String
