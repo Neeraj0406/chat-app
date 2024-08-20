@@ -36,7 +36,7 @@ const initialState: UserState = {
     avatar: "",
     name: "",
   },
-  token: "",
+  token: localStorage.getItem("chat-token") || "",
   socket: null,
 };
 

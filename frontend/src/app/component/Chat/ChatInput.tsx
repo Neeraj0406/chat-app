@@ -3,6 +3,8 @@ import { RootState } from '@/app/redux/store'
 import EmitEvents from '@/app/utils/constant'
 import React, { useState } from 'react'
 import { useSelector } from 'react-redux'
+import { GrAttachment } from "react-icons/gr";
+
 
 interface chatProps {
     chatId: string
@@ -34,6 +36,7 @@ const ChatInput = ({ chatId }: chatProps) => {
                             setMessage(e.target.value)
                         }}
                     />
+                    <button className='button'><GrAttachment /> </button>
                     <button type="submit" className='button'>Send</button>
                 </div>
             </form>

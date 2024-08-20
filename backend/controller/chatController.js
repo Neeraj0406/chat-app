@@ -452,7 +452,7 @@ const getAllMessages = async (req, res) => {
     try {
         const { chatId } = req.params
         const chat = await Chat.findById(chatId)
-
+        console.log("chat", chat)
         if (!chat) {
             return showError(res, "Invalid Chat id")
         }
@@ -462,11 +462,13 @@ const getAllMessages = async (req, res) => {
             return showError(res, "Invalid chat id")
         }
 
-        const messages = await Message.find({ chatId })
+        const messages = await Message.find({ chatId }).populate("sender")
+
         return showResponse(res, messages)
 
     } catch (error) {
-        showServerError()
+        console.log("error", error)
+        showServerError(res)
     }
 }
 

@@ -14,7 +14,7 @@ const config: Partial<Config> = withMT({
       },
       height: {
         "chatCon": 'calc(100vh - 60px)',
-        "chatHeight": 'calc(100vh - 240px)',
+        "chatHeight": 'calc(100vh - 200px)',
 
       },
       backgroundImage: {

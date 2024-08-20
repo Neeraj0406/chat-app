@@ -15,12 +15,10 @@ const ClientSideInitializer = () => {
 
 
     useEffect(() => {
-        const token = localStorage.getItem("chat-token");
         if (token) {
-            dispatch(setToken(token));
             dispatch(fetchUserData())
         }
-    }, [dispatch]);
+    }, [token]);
 
     useEffect(() => {
         let socketConnection: Socket | undefined;
