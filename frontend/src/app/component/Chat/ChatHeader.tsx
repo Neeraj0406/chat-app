@@ -10,14 +10,19 @@ import ConfirmModal from '../ConfirmModal'
 import { errorHandler } from '@/app/utils/commonFunction'
 import ChatServices from '@/app/services/chatServices'
 import { toast } from 'react-toastify'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import EmitEvents from '@/app/utils/constant'
 
 const ChatHeader = ({ chatDetails, groupAdmin, setRefresh, refresh }: {
     chatDetails: chatDetailsType | null | undefined, groupAdmin: boolean, refresh: boolean, setRefresh: React.Dispatch<React.SetStateAction<boolean>>
 }) => {
-    const { userInfo } = useSelector((state: RootState) => state.user)
+    const { userInfo, socket } = useSelector((state: RootState) => state.user)
     const [friendDetails, setFriendDetails] = useState<Member>()
+    const [typingInfo, setTypingInfo] = useState<string>("")
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const chatId = searchParams.get("chatId")
+
 
     useEffect(() => {
         if (chatDetails) {
@@ -40,6 +45,33 @@ const ChatHeader = ({ chatDetails, groupAdmin, setRefresh, refresh }: {
         }
     }
 
+    useEffect(() => {
+        const startTypingHandler = async (data: any) => {
+            console.log("header", chatId, data.chatId)
+            if (chatId == data?.chatId) {
+                console.log("start typing listner", data)
+                const msg = `${data?.user?.name} is typing...`
+                setTypingInfo(msg)
+            }
+        }
+        const stopTypingHandler = async (data: any) => {
+            console.log("stop typing listner", data)
+            setTypingInfo("")
+        }
+        if (socket) {
+            socket.on(EmitEvents.START_TYPING, startTypingHandler)
+            socket.on(EmitEvents.STOP_TYPING, stopTypingHandler)
+        }
+        return () => {
+            if (socket) {
+                socket.off(EmitEvents.START_TYPING, startTypingHandler)
+            }
+            setTypingInfo("")
+        }
+    }, [socket, chatId])
+
+    console.log("typing info", typingInfo);
+
 
     return (
         <div className='border px-6 py-2 flexCon gap-4 justify-between'>
@@ -52,7 +84,10 @@ const ChatHeader = ({ chatDetails, groupAdmin, setRefresh, refresh }: {
                             alt='user image'
                             className='rounded-full object-cover h-[50px] w-[50px]'
                         />
-                        <h3 className='text-semibold'>{friendDetails?.name}</h3>
+                        <div className="flex flex-col">
+                            <h3 className='text-semibold'>{friendDetails?.name}</h3>
+                            <small>{typingInfo}</small>
+                        </div>
                     </>
                     :
                     <>
@@ -61,7 +96,10 @@ const ChatHeader = ({ chatDetails, groupAdmin, setRefresh, refresh }: {
                             alt='user image'
                             className='rounded-full object-cover h-[50px] w-[50px]'
                         />
-                        <h3 className='text-semibold'>{chatDetails?.name}</h3>
+                        <div className="flex flex-col">
+                            <h3 className='text-semibold'>{chatDetails?.name}</h3>
+                            <small>{typingInfo}</small>
+                        </div>
                     </>
                 }
 

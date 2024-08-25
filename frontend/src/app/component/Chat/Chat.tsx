@@ -37,9 +37,6 @@ const Chat = () => {
         try {
             const res = await ChatServices.allMessages(id)
             setMessages(res?.data?.data || [])
-            setTimeout(() => {
-                scrollChatToBottom(bottomRef)
-            }, 1000);
         } catch (error) {
             errorHandler(error)
         } finally {
@@ -67,9 +64,13 @@ const Chat = () => {
     }
 
     useEffect(() => {
-        const newMessageHandler = (data: any) => {
-            setMessages((prev) => [...prev, data])
+        const newMessageHandler = (data: MessageType) => {
+            if (data?.chatId == chatId) {
+                setMessages((prev) => [...prev, data])
+            }
+
         }
+
         if (socket) {
             socket.on(EmitEvents.NEW_MESSAGE, newMessageHandler)
         }
@@ -80,13 +81,25 @@ const Chat = () => {
     }, [socket])
 
 
+
+
+
+
+    useEffect(() => {
+        scrollChatToBottom(bottomRef)
+    }, [messages])
+
+    console.log("messagesmessages", messages);
+
+
+
     return (
         <div className='flex-1 md:w-auto h-chatCon  '>
             {chatId ?
                 <>
                     <ChatHeader chatDetails={chatDetails} groupAdmin={userInfo?._id == chatDetails?.creator} setRefresh={setRefresh} refresh={refresh} />
                     <ChatMessage messages={messages} bottomRef={bottomRef} />
-                    <ChatInput chatId={chatId} bottomRef={bottomRef} setMessages={setMessages}/>
+                    <ChatInput chatId={chatId} bottomRef={bottomRef} setMessages={setMessages} />
                 </>
                 : <div className='flex items-center justify-center h-full opacity-50 '>
                     <div className="w-[500px] h-[500px] relative">

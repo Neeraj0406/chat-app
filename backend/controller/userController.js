@@ -111,10 +111,6 @@ const searchMyFriends = async (req, res) => {
             _id: { $ne: req.id }
         })
 
-
-
-
-
         return showResponse(res, allMyFriends)
 
 

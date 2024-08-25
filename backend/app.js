@@ -12,7 +12,7 @@ import { Message } from "./models/message.js"
 import chatRoutes from "./routes/chatRoute.js"
 import userRoutes from "./routes/userRoutes.js"
 import { connectDB } from "./utils/connectDb.js"
-import { getMemberSocketId, getUserExceptMe } from "./utils/helper.js"
+import { getMemberSocketId, getSockets, getUserExceptMe } from "./utils/helper.js"
 const app = express()
 
 const PORT = process.env.PORT || 8000
@@ -37,6 +37,10 @@ const server = createServer(app)
 const io = new Server(server, {
     cors: corsOptions
 })
+
+app.set("io", io)
+
+
 const userSocketIds = new Map()
 
 io.use(async (socket, next) => {
@@ -47,6 +51,7 @@ io.on("connection", (socket) => {
     console.log("User Connected to socket")
 
     const user = socket.user
+
     const userId = user.id.toString()
     if (userSocketIds.has(userId)) {
         userSocketIds.get(userId).push(socket.id)
@@ -81,7 +86,7 @@ io.on("connection", (socket) => {
         const members = getUserExceptMe(chat.members, user?._id)
         const membersSocket = getMemberSocketId(userSocketIds, members)
         const mineSocketIds = userSocketIds.get(userId)
-        console.log("mineSocketIds",mineSocketIds)
+        console.log("mineSocketIds", mineSocketIds)
         membersSocket?.forEach((socketId) => {
             io.to(socketId).emit(EmitEvents.NEW_MESSAGE, messageForRealTime)
         })
@@ -101,6 +106,19 @@ io.on("connection", (socket) => {
 
     })
 
+
+    socket.on(EmitEvents.START_TYPING, async ({ chatId }) => {
+        console.log("user started typing", chatId)
+        const chat = await Chat.findOne({ _id: chatId })
+        const memberSocketIds = getSockets(chat.members, user?._id)
+        io.to(memberSocketIds).emit(EmitEvents.START_TYPING, { user, chatId })
+    })
+    socket.on(EmitEvents.STOP_TYPING, async ({ chatId }) => {
+        console.log("user started typing", chatId)
+        const chat = await Chat.findOne({ _id: chatId })
+        const memberSocketIds = getSockets(chat.members, user?._id)
+        io.to(memberSocketIds).emit(EmitEvents.STOP_TYPING, { user, chatId })
+    })
 
     socket.on("disconnect", () => {
         console.log("User is disconnnected")

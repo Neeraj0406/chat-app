@@ -2,6 +2,7 @@ import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { v2 as cloudinary } from "cloudinary"
 import { v4 as uuid } from "uuid"
+import { userSocketIds } from "../app.js"
 
 
 export const bcryptPassword = async (password) => {
@@ -54,8 +55,11 @@ export const verifyToken = (token) => {
 };
 
 export const emitEvent = (req, event, users, data) => {
-    console.log("emitting event", req, event, users, data);
-
+    const io = req.app.get("io")
+    users = users?.map((user) => user?.toString())
+    const socketIds = getSockets(users, req.id)
+    console.log("getting socket id ", socketIds);
+    io.to(socketIds).emit(event, data)
 }
 
 
@@ -67,10 +71,14 @@ export const getUserExceptMe = (members, me) => {
 }
 
 
-export const getSockets = (users = [], userSocketIds) => {
-    console.log(users)
-    console.log(userSocketIds)
-    const sockets = users.map(user => userSocketIds?.get(user))
+export const getSockets = (users = [], myId) => {
+    console.log("my uid ", myId);
+
+    users = getUserExceptMe(users, myId)
+    console.log("users", users);
+
+    const sockets = []
+    users.forEach(user => userSocketIds?.get(user)?.forEach((user) => sockets.push(user)))
     return sockets
 }
 

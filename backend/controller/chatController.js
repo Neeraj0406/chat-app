@@ -164,7 +164,6 @@ const removeMembers = async (req, res) => {
             const newPresentUsersName = notPresentUsersData?.map((data) => data.name)
             return showError(res, `${newPresentUsersName} are not present in the group`)
         }
-        console.log("chat", chat.members, members)
         const newMembersList = chat.members.filter((chatMember) => !members.some(member => member.toString() === chatMember.toString()));
 
         chat.members = newMembersList
@@ -239,43 +238,45 @@ const sendAttachments = async (req, res) => {
         if (!chat) {
             return showError(res, "Chat not found")
         }
+        if (!user) {
+            return showError("User not found")
+        }
 
         const files = req.files ?? []
+
         if (files.length > 1) {
             return showError(res, "Please provide attachments")
         }
-
-        const attachments = []
-
+        const attachments = await uploadFilesToCloudinary(files)
         const messageForRealTime = {
             content: "",
             attachments,
             sender: {
                 _id: req.id,
                 name: user.name,
-                avatar: avatar.url
+                avatar: user.avatar
             },
-            chat: chatId
+
         }
 
         const messageForDB = {
             content: "",
             attachments,
             sender: req.id,
-            chat: chatId
+            chatId: chatId
         }
-
         const message = await Message.create(messageForDB)
-
-        emitEvent(req, EmitEvents.NEW_ATTACHMENT, chat.members, {
-            message: messageForRealTime,
-            chatId
+        emitEvent(req, EmitEvents.NEW_MESSAGE, chat.members, {
+            ...messageForRealTime,
+            chatId: chatId
         })
 
-        emitEvent(req, EmitEvents.NEW_MESSAGE_ALERT, chat.members, { chatId })
+        // emitEvent(req, EmitEvents.NEW_MESSAGE_ALERT, chat.members, { chatId: chatId })
 
-        return showResponse(res, message)
+        return showResponse(res, message, "Image sent successfully")
     } catch (error) {
+        console.log(error);
+
         return showServerError(res)
     }
 }
@@ -431,7 +432,6 @@ const updateGroup = async (req, res) => {
         chatDetails.avatar = newAvatar
     }
 
-    console.log("chatDetails", chatDetails)
     await chatDetails.save()
 
     return showResponse(res, chatDetails, "Group updated successfully")
@@ -452,12 +452,10 @@ const getAllMessages = async (req, res) => {
     try {
         const { chatId } = req.params
         const chat = await Chat.findById(chatId)
-        console.log("chat", chat)
         if (!chat) {
             return showError(res, "Invalid Chat id")
         }
         const memberFound = chat.members.find((member) => member?.toString() == req?.id?.toString())
-        console.log("memberFound", memberFound, chat.members, req?.id)
         if (!memberFound) {
             return showError(res, "Invalid chat id")
         }
